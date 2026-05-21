@@ -1,0 +1,253 @@
+/**
+ * 遮罩层样式
+ */
+
+.screenshot-overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483647;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 只有在没有选择框时，容器才接收点击事件 */
+.screenshot-overlay-container.selecting {
+  pointer-events: auto;
+}
+
+.screenshot-hint {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2147483648;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.screenshot-new-folder-btn {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 120, 255, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2147483648;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.screenshot-new-folder-btn:hover {
+  background: rgba(0, 120, 255, 1);
+  transform: translateX(-50%) scale(1.05);
+}
+
+.screenshot-new-folder-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.screenshot-selection-box {
+  position: fixed;
+  background: rgba(0, 120, 255, 0.2);
+  border: 2px dashed #0078ff;
+  pointer-events: auto;
+  cursor: move;
+  box-sizing: border-box;
+  animation: dash-animation 1s linear infinite;
+}
+
+/* 锁定状态：让选择框和手柄不阻止点击 */
+.screenshot-selection-box.locked {
+  pointer-events: none !important;
+  border-color: #00ff00;
+  background: rgba(0, 255, 0, 0.1);
+  cursor: default !important;
+}
+
+.screenshot-selection-box.locked .resize-handle {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.screenshot-selection-box.locked .dimension-label {
+  background: rgba(0, 255, 0, 0.9);
+  pointer-events: none !important;
+}
+
+@keyframes dash-animation {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.dimension-label {
+  position: absolute;
+  top: -30px;
+  left: 0;
+  background: rgba(0, 120, 255, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 调整手柄 */
+.resize-handle {
+  position: absolute;
+  background: #0078ff;
+  border: 2px solid white;
+  pointer-events: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.resize-handle-top-left {
+  top: -6px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  border-radius: 50%;
+}
+
+.resize-handle-top-right {
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+  border-radius: 50%;
+}
+
+.resize-handle-bottom-left {
+  bottom: -6px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+  border-radius: 50%;
+}
+
+.resize-handle-bottom-right {
+  bottom: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  border-radius: 50%;
+}
+
+.resize-handle-top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 8px;
+  cursor: ns-resize;
+  border-radius: 4px;
+}
+
+.resize-handle-bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 8px;
+  cursor: ns-resize;
+  border-radius: 4px;
+}
+
+.resize-handle-left {
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 40px;
+  cursor: ew-resize;
+  border-radius: 4px;
+}
+
+.resize-handle-right {
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 40px;
+  cursor: ew-resize;
+  border-radius: 4px;
+}
+
+/* 消息提示 */
+.screenshot-message {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 2147483648;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 截图成功/失败闪烁效果 */
+.screenshot-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483649;
+  pointer-events: none;
+  animation: flash 0.3s ease-out;
+}
+
+.screenshot-flash-success {
+  background: rgba(0, 255, 0, 0.3);
+}
+
+.screenshot-flash-error {
+  background: rgba(255, 0, 0, 0.3);
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

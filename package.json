@@ -1,0 +1,12 @@
+{
+  "name": "screenshot-extension",
+  "version": "1.0.0",
+  "description": "Chrome 浏览器截图插件 - 支持快捷键操作和批量截图",
+  "keywords": [
+    "chrome-extension",
+    "screenshot",
+    "screen-capture"
+  ],
+  "author": "",
+  "license": "MIT"
+}

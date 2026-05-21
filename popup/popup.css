@@ -1,0 +1,166 @@
+/**
+ * 弹窗样式
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+}
+
+.popup-container {
+  background: white;
+}
+
+.header {
+  background: linear-gradient(135deg, #0078ff 0%, #0056b3 100%);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 10px;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stats {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0078ff;
+}
+
+.shortcuts {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.shortcuts h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.shortcut-item:last-child {
+  margin-bottom: 0;
+}
+
+.shortcut-key {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #333;
+  font-weight: 600;
+}
+
+.shortcut-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.actions {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: #0078ff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.footer {
+  padding: 12px 20px;
+  text-align: center;
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+
+.footer p {
+  font-size: 12px;
+  color: #999;
+}
+
+.footer a {
+  color: #0078ff;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}

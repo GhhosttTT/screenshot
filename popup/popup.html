@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenshot Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <img src="../icons/icon48.png" alt="Logo" class="logo">
+      <h1>Screenshot Extension</h1>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-label">本次截图:</span>
+        <span class="stat-value" id="screenshot-count">0</span>
+      </div>
+    </div>
+
+    <div class="shortcuts">
+      <h2>快捷键</h2>
+      <div class="shortcut-item">
+        <span class="shortcut-key">Ctrl+Shift+Q</span>
+        <span class="shortcut-desc">激活/停用遮罩层</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-key">Ctrl+Shift+S</span>
+        <span class="shortcut-desc">截取选定区域</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-key">Ctrl+Shift+X</span>
+        <span class="shortcut-desc">清除遮罩层</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="activate-btn" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 2h12v12H2V2zm1 1v10h10V3H3z"/>
+          <path d="M4 4h8v8H4V4z" opacity="0.5"/>
+        </svg>
+        激活遮罩层
+      </button>
+      <button id="settings-btn" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+          <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+        </svg>
+        设置
+      </button>
+    </div>
+
+    <div class="footer">
+      <p>v1.0.0 | <a href="#" id="help-link">使用帮助</a></p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

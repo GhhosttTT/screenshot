@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>生成图标</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Screenshot Extension 图标生成器</h1>
+  <p>点击下载按钮保存图标</p>
+  
+  <div>
+    <canvas id="icon16" width="16" height="16"></canvas>
+    <button onclick="downloadIcon('icon16', 16)">下载 16x16</button>
+  </div>
+  
+  <div>
+    <canvas id="icon48" width="48" height="48"></canvas>
+    <button onclick="downloadIcon('icon48', 48)">下载 48x48</button>
+  </div>
+  
+  <div>
+    <canvas id="icon128" width="128" height="128"></canvas>
+    <button onclick="downloadIcon('icon128', 128)">下载 128x128</button>
+  </div>
+
+  <script>
+    // 绘制图标
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const padding = size * 0.15;
+      const innerSize = size - padding * 2;
+      
+      // 背景
+      ctx.fillStyle = '#0078ff';
+      ctx.fillRect(0, 0, size, size);
+      
+      // 相机图标
+      ctx.strokeStyle = 'white';
+      ctx.fillStyle = 'white';
+      ctx.lineWidth = size * 0.08;
+      
+      // 相机主体
+      const bodyX = padding;
+      const bodyY = padding + innerSize * 0.2;
+      const bodyW = innerSize;
+      const bodyH = innerSize * 0.6;
+      const radius = size * 0.08;
+      
+      ctx.beginPath();
+      ctx.moveTo(bodyX + radius, bodyY);
+      ctx.lineTo(bodyX + bodyW - radius, bodyY);
+      ctx.arcTo(bodyX + bodyW, bodyY, bodyX + bodyW, bodyY + radius, radius);
+      ctx.lineTo(bodyX + bodyW, bodyY + bodyH - radius);
+      ctx.arcTo(bodyX + bodyW, bodyY + bodyH, bodyX + bodyW - radius, bodyY + bodyH, radius);
+      ctx.lineTo(bodyX + radius, bodyY + bodyH);
+      ctx.arcTo(bodyX, bodyY + bodyH, bodyX, bodyY + bodyH - radius, radius);
+      ctx.lineTo(bodyX, bodyY + radius);
+      ctx.arcTo(bodyX, bodyY, bodyX + radius, bodyY, radius);
+      ctx.closePath();
+      ctx.stroke();
+      
+      // 镜头
+      const lensX = size / 2;
+      const lensY = bodyY + bodyH / 2;
+      const lensR = innerSize * 0.25;
+      
+      ctx.beginPath();
+      ctx.arc(lensX, lensY, lensR, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // 闪光灯
+      const flashX = padding + innerSize * 0.75;
+      const flashY = padding + innerSize * 0.1;
+      const flashR = size * 0.06;
+      
+      ctx.beginPath();
+      ctx.arc(flashX, flashY, flashR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 绘制所有尺寸的图标
+    drawIcon(document.getElementById('icon16'), 16);
+    drawIcon(document.getElementById('icon48'), 48);
+    drawIcon(document.getElementById('icon128'), 128);
+
+    // 下载图标
+    function downloadIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = `icon${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>
