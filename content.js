@@ -475,12 +475,34 @@ if (window.screenshotExtensionInjected) {
       if (message.hideFixed) {
         hideFixedElements();
       }
+      
+      // 添加滚动监听用于调试
+      let lastScrollY = window.scrollY;
+      const scrollListener = () => {
+        const currentScrollY = window.scrollY;
+        if (Math.abs(currentScrollY - lastScrollY) > 10) {
+          console.log(`[ContentScript] Page scrolled: ${lastScrollY} -> ${currentScrollY}`);
+          lastScrollY = currentScrollY;
+        }
+      };
+      window.addEventListener('scroll', scrollListener, { passive: true });
+      
+      // 保存清理函数
+      window.__scrollShotScrollListener = scrollListener;
+      
       sendResponse({ ok: true });
     } else if (message.type === 'SCROLLSHOT_RESTORE') {
       scrollShotState.isActive = false;
       scrollShotState.selectedRegion = null;
       restoreFixedElements();
       removeScrollShotOverlay();
+      
+      // 移除滚动监听
+      if (window.__scrollShotScrollListener) {
+        window.removeEventListener('scroll', window.__scrollShotScrollListener);
+        delete window.__scrollShotScrollListener;
+      }
+      
       sendResponse({ ok: true });
     }
   });

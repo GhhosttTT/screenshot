@@ -74,7 +74,10 @@ function loadImage(src) {
 }
 
 async function captureCurrentViewport(force = false) {
+  console.log(`[CaptureViewport] Called: running=${running}, busy=${busy}, force=${force}`);
+  
   if (!running || busy) {
+    console.log(`[CaptureViewport] Skipped: running=${running}, busy=${busy}`);
     return;
   }
   busy = true;
@@ -361,23 +364,53 @@ async function startSession() {
   startButton.disabled = true;
   finishButton.disabled = false;
   selectRegionButton.disabled = true;
+  
+  console.log(`[StartSession] ========== SESSION STARTED ==========`);
+  console.log(`[StartSession] hasRegion=${hasRegion}, requireRegion=${requireRegion}`);
+  console.log(`[StartSession] sampleIntervalMs=${sampleIntervalMs}`);
+  
   setState(`Capturing ${hasRegion ? "selected region" : "page"}. Scroll manually, then press Alt+Shift+S to finish.`);
   await focusTargetTab();
+  
+  console.log(`[StartSession] Taking first screenshot...`);
   await captureCurrentViewport(true);
-  pollId = setInterval(() => captureOrStop(false), sampleIntervalMs);
+  
+  console.log(`[StartSession] Starting polling with interval ${sampleIntervalMs}ms`);
+  pollId = setInterval(() => {
+    console.log(`[Poll] Timer tick, running=${running}, busy=${busy}`);
+    captureOrStop(false);
+  }, sampleIntervalMs);
+  
+  console.log(`[StartSession] PollId=${pollId}, running=${running}`);
+  
+  // 添加页面滚动监听（用于调试）
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'PAGE_SCROLLED') {
+      console.log(`[StartSession] Received scroll event from page: scrollY=${e.data.scrollY}`);
+    }
+  });
 }
 
 async function finishSession() {
+  console.log(`[FinishSession] Called: running=${running}, finishing=${finishing}`);
+  
   if (!running || finishing) {
+    console.log(`[FinishSession] Aborted: running=${running}, finishing=${finishing}`);
     return;
   }
   finishing = true;
+  console.log(`[FinishSession] Clearing interval ${pollId}`);
   clearInterval(pollId);
   pollId = undefined;
+  
+  console.log(`[FinishSession] Taking final screenshot...`);
   await captureCurrentViewport(true);
+  
   running = false;
   startButton.disabled = true;
   finishButton.disabled = true;
+  
+  console.log(`[FinishSession] Total shots collected: ${shots.length}`);
   setState("Stitching and removing overlaps.");
 
   try {
