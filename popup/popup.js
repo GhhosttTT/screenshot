@@ -12,7 +12,6 @@ const openRecorderBtn = document.getElementById('open-recorder-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const helpBtn = document.getElementById('help-btn');
 const hideFixedCheckbox = document.getElementById('hide-fixed');
-const useRegionForScrollCheckbox = document.getElementById('use-region-for-scroll');
 const recordAudioCheckbox = document.getElementById('record-audio');
 
 // 选项卡切换
@@ -78,7 +77,6 @@ openScrollConsoleBtn.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab();
     const hideFixed = hideFixedCheckbox.checked;
-    const useRegion = useRegionForScrollCheckbox.checked;
     
     // 发送消息给 background 打开滚动截图控制台
     await chrome.runtime.sendMessage({
@@ -87,7 +85,7 @@ openScrollConsoleBtn.addEventListener('click', async () => {
       windowId: tab.windowId,
       title: tab.title || 'page',
       hideFixed: hideFixed,
-      useRegion: useRegion
+      useRegion: false  // 总是从控制台内选择区域
     });
     
     window.close();

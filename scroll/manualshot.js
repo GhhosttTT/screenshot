@@ -166,30 +166,33 @@ function updateReadout() {
   
   // 根据mode计算实际覆盖的范围
   let covered;
-  if (first.mode === "region" && first.crop && last.crop) {
-    // 区域模式：计算crop区域的实际覆盖范围
-    const firstCropTop = first.y + first.crop.y;
-    const lastCropBottom = last.y + last.crop.y + last.crop.height;
-    covered = Math.round(lastCropBottom - firstCropTop);
+  let totalHeight;
+  
+  if (first.mode === "region" && first.crop && last.crop && metrics?.selectedRegionHeight) {
+    // 区域模式：计算已覆盖选区的高度
+    // first.y 是第一次截图时的页面滚动位置
+    // last.y 是最后一次截图时的页面滚动位置
+    const scrolledDistance = last.y - first.y;
+    
+    // 已覆盖 = 滚动距离 + 第一个crop的高度
+    covered = Math.round(scrolledDistance + first.crop.height);
+    totalHeight = metrics.selectedRegionHeight;
+    
+    console.log(`[UpdateReadout] Region mode: scrolled=${scrolledDistance}, firstCropHeight=${first.crop.height}, covered=${covered}, total=${totalHeight}`);
   } else {
     // 页面模式：使用整个视口高度
     covered = Math.round(last.y + last.viewportHeight - first.y);
+    totalHeight = metrics?.totalHeight || covered;
   }
   
   rangeText.textContent = `${covered} px`;
   modeLabel = last.mode?.startsWith("region") ? "selected region" : last.mode === "element" ? "element" : "page";
   
   // 计算进度
-  if (metrics) {
-    let totalHeight = metrics.totalHeight;
-    
-    // 如果是区域模式且有选区高度信息，使用选区高度
-    if (first.mode === "region" && metrics.selectedRegionHeight) {
-      totalHeight = metrics.selectedRegionHeight;
-      console.log(`[UpdateReadout] Using region height ${totalHeight}px for progress, covered: ${covered}px`);
-    }
-    
-    setProgress((covered / totalHeight) * 100);
+  if (totalHeight) {
+    const progress = Math.min(100, (covered / totalHeight) * 100);
+    setProgress(progress);
+    console.log(`[UpdateReadout] Progress: ${progress.toFixed(1)}% (${covered}/${totalHeight})`);
   }
   
   if (running) {
