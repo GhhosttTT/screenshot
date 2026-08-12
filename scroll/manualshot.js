@@ -74,6 +74,80 @@ function loadImage(src) {
   });
 }
 
+function readImageStrip(image, crop, offsetYCss, heightCss, scale) {
+  const width = Math.round(crop.width * scale);
+  const height = Math.round(heightCss * scale);
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(
+    image,
+    Math.round(crop.x * scale),
+    Math.round((crop.y + offsetYCss) * scale),
+    width,
+    height,
+    0,
+    0,
+    width,
+    height
+  );
+  return context.getImageData(0, 0, width, height).data;
+}
+
+function averagePixelDelta(a, b) {
+  if (!a || !b || a.length !== b.length) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  let total = 0;
+  let samples = 0;
+  for (let i = 0; i < a.length; i += 16) {
+    total += Math.abs(a[i] - b[i]);
+    total += Math.abs(a[i + 1] - b[i + 1]);
+    total += Math.abs(a[i + 2] - b[i + 2]);
+    samples += 3;
+  }
+  return total / Math.max(1, samples);
+}
+
+function detectVisualOverlap(previous, current, scale, expectedOverlapCss) {
+  const previousCrop = previous.shot.crop;
+  const currentCrop = current.shot.crop;
+  if (!previousCrop || !currentCrop || previousCrop.width !== currentCrop.width) {
+    return 0;
+  }
+  if (expectedOverlapCss < 12) {
+    return 0;
+  }
+
+  const maxOverlap = Math.floor(Math.min(previousCrop.height, currentCrop.height, expectedOverlapCss + 160));
+  const minOverlap = Math.max(12, Math.floor(expectedOverlapCss - 120));
+  let bestOverlap = 0;
+  let bestDelta = Number.POSITIVE_INFINITY;
+
+  for (let overlap = maxOverlap; overlap >= minOverlap; overlap -= 4) {
+    const stripHeight = Math.min(48, overlap);
+    const previousOffset = previousCrop.height - overlap;
+    const previousStrip = readImageStrip(previous.image, previousCrop, previousOffset, stripHeight, scale);
+    const currentStrip = readImageStrip(current.image, currentCrop, 0, stripHeight, scale);
+    const delta = averagePixelDelta(previousStrip, currentStrip);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      bestOverlap = overlap;
+    }
+    if (delta <= 3) {
+      break;
+    }
+  }
+
+  return bestDelta <= 8 ? bestOverlap : 0;
+}
+
 async function captureCurrentViewport(force = false) {
   console.log(`[CaptureViewport] Called: running=${running}, busy=${busy}, force=${force}`);
   
@@ -274,6 +348,7 @@ async function stitchManualShots() {
 
   // 追踪已覆盖到的页面位置（页面绝对坐标）
   let coveredPageBottom = firstCropPageY;
+  let previousDrawn = null;
 
   for (let i = 0; i < sorted.length; i++) {
     const shot = sorted[i];
@@ -285,7 +360,15 @@ async function stitchManualShots() {
     const cropPageBottom = cropPageTop + crop.height;
     
     // 计算需要绘制的部分（避免重叠）
-    const drawPageTop = Math.max(coveredPageBottom, cropPageTop);
+    const expectedOverlap = Math.max(0, coveredPageBottom - cropPageTop);
+    const visualOverlap = previousDrawn
+      ? detectVisualOverlap(previousDrawn, { shot, image }, scale, expectedOverlap)
+      : 0;
+    const overlapCss = Math.max(expectedOverlap, visualOverlap);
+    const drawPageTop = cropPageTop + overlapCss;
+    const destPageTop = visualOverlap > expectedOverlap
+      ? coveredPageBottom
+      : Math.max(coveredPageBottom, cropPageTop);
     const drawPageBottom = cropPageBottom;
     const drawHeight = drawPageBottom - drawPageTop;
     
@@ -305,9 +388,9 @@ async function stitchManualShots() {
     
     // 目标位置（相对于输出canvas的顶部）
     const destX = 0;
-    const destY = Math.round((drawPageTop - firstCropPageY) * scale);
+    const destY = Math.round((destPageTop - firstCropPageY) * scale);
 
-    console.log(`[Stitch] Shot ${i}: pageY=${shot.y}, crop=(${crop.x},${crop.y},${crop.width}x${crop.height}), draw from ${drawPageTop} to ${drawPageBottom}, dest=${destY}`);
+    console.log(`[Stitch] Shot ${i}: pageY=${shot.y}, crop=(${crop.x},${crop.y},${crop.width}x${crop.height}), expectedOverlap=${expectedOverlap}, visualOverlap=${visualOverlap}, draw from ${drawPageTop} to ${drawPageBottom}, dest=${destY}`);
 
     // 绘制到canvas
     if (sourceWidth > 0 && sourceHeight > 0 && sourceX >= 0 && sourceY >= 0 && sourceX + sourceWidth <= image.width && sourceY + sourceHeight <= image.height) {
@@ -326,13 +409,33 @@ async function stitchManualShots() {
       console.warn(`[Stitch] Shot ${i}: invalid source region, skipping`);
     }
     
-    coveredPageBottom = Math.max(coveredPageBottom, cropPageBottom);
+    coveredPageBottom = Math.max(coveredPageBottom, destPageTop + drawHeight);
+    previousDrawn = { shot, image };
   }
 
-  console.log(`[Stitch] Complete. Final canvas: ${canvas.width} x ${canvas.height}`);
+  const finalCssHeight = Math.max(1, Math.round(coveredPageBottom - firstCropPageY));
+  let outputCanvas = canvas;
+  if (finalCssHeight < outputCssHeight) {
+    outputCanvas = document.createElement("canvas");
+    outputCanvas.width = canvas.width;
+    outputCanvas.height = Math.round(finalCssHeight * scale);
+    outputCanvas.getContext("2d").drawImage(
+      canvas,
+      0,
+      0,
+      outputCanvas.width,
+      outputCanvas.height,
+      0,
+      0,
+      outputCanvas.width,
+      outputCanvas.height
+    );
+  }
+
+  console.log(`[Stitch] Complete. Final canvas: ${outputCanvas.width} x ${outputCanvas.height}`);
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
+    outputCanvas.toBlob((blob) => {
       if (blob) {
         resolve(blob);
       } else {
@@ -356,13 +459,20 @@ async function startSession() {
   
   // 如果有选区，保存选区高度到metrics中
   if (selected?.ok && selected.region) {
+    const initialScroll = await sendToTarget({
+      type: "SCROLLSHOT_GET_SCROLL",
+      requireRegion: true
+    });
+    if (initialScroll?.ok) {
+      metrics = { ...metrics, ...initialScroll };
+    }
     metrics.selectedRegionHeight = selected.region.height;
     console.log(`[StartSession] Selected region: width=${selected.region.width}, height=${selected.region.height}`);
-    console.log(`[StartSession] Viewport: width=${metrics.viewportWidth}, height=${metrics.viewportHeight}`);
+    console.log(`[StartSession] Capture target: mode=${metrics.mode || "unknown"}, viewportHeight=${metrics.viewportHeight}, totalHeight=${metrics.totalHeight}`);
     
     // 警告：如果选区高度小于视口高度，一次截图就能完成
-    if (selected.region.height <= metrics.viewportHeight) {
-      console.warn(`[StartSession] Selected region height (${selected.region.height}px) is less than viewport height (${metrics.viewportHeight}px). Single shot will capture the entire region.`);
+    if (metrics.totalHeight <= metrics.viewportHeight) {
+      console.log(`[StartSession] Capture target height (${metrics.totalHeight}px) fits in the selected viewport (${metrics.viewportHeight}px). One shot is enough unless the content changes.`);
     }
   }
   await sendToTarget({
@@ -438,8 +548,14 @@ async function finishSession() {
     });
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" });
-    setState("Saved. You can close this window.");
+    hasRegion = false;
+    requireRegion = false;
+    setState("Saved. Select a region or click Start to capture another image.");
     setProgress(100);
+    startButton.disabled = false;
+    finishButton.disabled = true;
+    selectRegionButton.disabled = false;
+    contentWidthRegionInput.disabled = false;
   } catch (error) {
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" }).catch(() => {});
     setState(error.message || "Manual screenshot failed.");
@@ -447,7 +563,7 @@ async function finishSession() {
     selectRegionButton.disabled = false;
     contentWidthRegionInput.disabled = false;
   } finally {
-    await chrome.runtime.sendMessage({ type: "SCROLLSHOT_CLOSED" }).catch(() => {});
+    finishing = false;
   }
 }
 

@@ -20,31 +20,6 @@ body {
   overflow: hidden;
 }
 
-/* 头部 */
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-.logo {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 8px;
-}
-
-.header h1 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.subtitle {
-  font-size: 12px;
-  opacity: 0.9;
-}
-
 /* 统计信息 */
 .stats {
   display: grid;

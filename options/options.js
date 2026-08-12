@@ -12,6 +12,24 @@ const defaultConfig = {
   showDimensions: true
 };
 
+function normalizeConfig(config = {}) {
+  const normalized = { ...defaultConfig, ...config };
+  const rgbaMatch = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([.\d]+))?\s*\)$/i.exec(normalized.overlayColor || '');
+  if (rgbaMatch) {
+    const [, r, g, b, a] = rgbaMatch;
+    normalized.overlayColor = `#${[r, g, b]
+      .map((value) => Math.max(0, Math.min(255, Number(value))).toString(16).padStart(2, '0'))
+      .join('')}`;
+    if (a !== undefined && !config.overlayOpacity) {
+      normalized.overlayOpacity = Math.round(Math.max(0, Math.min(1, Number(a))) * 100);
+    }
+  }
+  if (!/^#[0-9a-f]{6}$/i.test(normalized.overlayColor)) {
+    normalized.overlayColor = defaultConfig.overlayColor;
+  }
+  return normalized;
+}
+
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
@@ -24,7 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadConfig() {
   const result = await chrome.storage.sync.get('config');
-  const config = result.config || defaultConfig;
+  const config = normalizeConfig(result.config);
+  if (JSON.stringify(config) !== JSON.stringify(result.config || {})) {
+    await chrome.storage.sync.set({ config });
+  }
 
   // 填充表单
   document.getElementById('save-path').value = config.savePath || 'desktop';

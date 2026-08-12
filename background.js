@@ -12,6 +12,33 @@ let currentSessionFolder = null;
 // 滚动截图会话管理
 let activeScrollSession = null;
 
+const defaultConfig = {
+  savePath: 'desktop',
+  imageFormat: 'png',
+  imageQuality: 90,
+  overlayColor: '#0078ff',
+  overlayOpacity: 20,
+  showDimensions: true
+};
+
+function normalizeConfig(config = {}) {
+  const normalized = { ...defaultConfig, ...config };
+  const rgbaMatch = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([.\d]+))?\s*\)$/i.exec(normalized.overlayColor || '');
+  if (rgbaMatch) {
+    const [, r, g, b, a] = rgbaMatch;
+    normalized.overlayColor = `#${[r, g, b]
+      .map((value) => Math.max(0, Math.min(255, Number(value))).toString(16).padStart(2, '0'))
+      .join('')}`;
+    if (a !== undefined && !config.overlayOpacity) {
+      normalized.overlayOpacity = Math.round(Math.max(0, Math.min(1, Number(a))) * 100);
+    }
+  }
+  if (!/^#[0-9a-f]{6}$/i.test(normalized.overlayColor)) {
+    normalized.overlayColor = defaultConfig.overlayColor;
+  }
+  return normalized;
+}
+
 // 监听插件安装
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Screenshot Extension 已安装');
@@ -23,7 +50,8 @@ chrome.runtime.onInstalled.addListener(() => {
         savePath: 'desktop',
         imageFormat: 'png',
         imageQuality: 90,
-        overlayColor: 'rgba(0, 120, 255, 0.2)',
+        overlayColor: '#0078ff',
+        overlayOpacity: 20,
         showDimensions: true
       };
       chrome.storage.sync.set({ config: defaultConfig });
@@ -75,7 +103,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'GET_CONFIG') {
     // 获取配置
     chrome.storage.sync.get('config', (result) => {
-      sendResponse({ config: result.config });
+      const config = normalizeConfig(result.config);
+      if (JSON.stringify(config) !== JSON.stringify(result.config || {})) {
+        chrome.storage.sync.set({ config });
+      }
+      sendResponse({ config });
     });
     return true; // 保持消息通道开放
   } else if (message.type === 'CAPTURE_COMPLETE') {

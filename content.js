@@ -383,7 +383,8 @@ if (window.screenshotExtensionInjected) {
         savePath: 'desktop',
         imageFormat: 'png',
         imageQuality: 90,
-        overlayColor: 'rgba(0, 120, 255, 0.2)',
+        overlayColor: '#0078ff',
+        overlayOpacity: 20,
         showDimensions: true
       };
     }
