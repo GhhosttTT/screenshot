@@ -220,7 +220,7 @@
   }
 }
 
-/* 截图成功/失败闪烁效果 */
+/* 截图失败闪烁效果 */
 .screenshot-flash {
   position: fixed;
   top: 0;
@@ -230,10 +230,6 @@
   z-index: 2147483649;
   pointer-events: none;
   animation: flash 0.3s ease-out;
-}
-
-.screenshot-flash-success {
-  background: rgba(0, 255, 0, 0.3);
 }
 
 .screenshot-flash-error {

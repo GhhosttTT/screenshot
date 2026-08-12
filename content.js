@@ -370,14 +370,6 @@ if (window.screenshotExtensionInjected) {
       setTimeout(() => message.remove(), 5000);
     }
 
-    flashSuccess() {
-      const flash = document.createElement('div');
-      flash.className = 'screenshot-flash screenshot-flash-success';
-      document.body.appendChild(flash);
-
-      setTimeout(() => flash.remove(), 300);
-    }
-
     flashError() {
       const flash = document.createElement('div');
       flash.className = 'screenshot-flash screenshot-flash-error';
@@ -445,8 +437,7 @@ if (window.screenshotExtensionInjected) {
       sendResponse({ success: true });
     } else if (message.type === 'CAPTURE_SUCCESS') {
       if (overlayManager) {
-        console.log('Capture success, showing flash...');
-        overlayManager.flashSuccess();
+        console.log('Capture success.');
         overlayManager.showMessage(`截图已保存: ${message.data.filename}`);
       }
       sendResponse({ success: true });

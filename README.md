@@ -59,7 +59,7 @@ cd e:\study\ppt-content-extractor
 3. **截图**
    - 按 `Ctrl+Shift+S` 截取当前区域
    - 截图自动保存到桌面的 `Screenshots_日期` 文件夹
-   - 显示绿色闪烁效果表示成功
+   - 显示截图成功提示消息
 
 4. **批量截图**
    - 保持遮罩层显示
