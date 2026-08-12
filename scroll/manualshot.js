@@ -111,6 +111,9 @@ async function captureCurrentViewport(force = false) {
 
     const y = Math.round(scroll.y);
     const changedEnough = lastCapturedY === null || Math.abs(y - lastCapturedY) >= minScrollDelta;
+    
+    console.log(`[ScrollShot] Poll: y=${y}, lastY=${lastCapturedY}, changed=${changedEnough}, crop=${JSON.stringify(scroll.crop)}`);
+    
     if (!force && !changedEnough) {
       return;
     }
@@ -180,13 +183,26 @@ async function stitchManualShots() {
 
   const scale = metrics.devicePixelRatio || 1;
   const sorted = [...shots].sort((a, b) => a.y - b.y);
-  const firstY = sorted[0].y;
-  const last = sorted[sorted.length - 1];
-  const outputCssHeight = Math.round(last.y + last.viewportHeight - firstY);
   
-  // 使用 crop 区域的宽度作为输出宽度
+  // 使用第一个截图的crop区域确定输出宽度
   const firstCrop = sorted[0].crop || { x: 0, y: 0, width: sorted[0].viewportWidth, height: sorted[0].viewportHeight };
   const outputCssWidth = Math.round(firstCrop.width);
+  
+  // 计算输出高度：基于实际截取的crop区域，而不是整个视口
+  const firstY = sorted[0].y;
+  const last = sorted[sorted.length - 1];
+  
+  // 如果是区域模式，需要计算区域的总高度
+  let outputCssHeight;
+  if (sorted[0].mode?.startsWith('region')) {
+    // 区域模式：计算从第一个crop顶部到最后一个crop底部的高度
+    const firstCropTop = sorted[0].y + (sorted[0].crop?.y || 0);
+    const lastCropBottom = last.y + (last.crop?.y || 0) + (last.crop?.height || last.viewportHeight);
+    outputCssHeight = Math.round(lastCropBottom - firstCropTop);
+  } else {
+    // 页面模式：使用整个视口高度
+    outputCssHeight = Math.round(last.y + last.viewportHeight - firstY);
+  }
 
   const maxPixels = 268_000_000;
   const pixelEstimate = outputCssWidth * outputCssHeight * scale * scale;
@@ -201,32 +217,46 @@ async function stitchManualShots() {
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  let coveredBottom = firstY;
+  // 追踪已覆盖的区域（使用crop坐标系）
+  let coveredBottom = sorted[0].mode?.startsWith('region') 
+    ? sorted[0].y + (sorted[0].crop?.y || 0)
+    : firstY;
+  
+  const outputStartY = coveredBottom;
+
   for (const shot of sorted) {
     const image = await loadImage(shot.dataUrl);
     const crop = shot.crop || { x: 0, y: 0, width: shot.viewportWidth, height: shot.viewportHeight };
-    const shotTop = shot.y;
-    const shotBottom = shot.y + shot.viewportHeight;
-    const cropTopCss = Math.max(0, coveredBottom - shotTop);
-    const drawableCssHeight = Math.max(0, shotBottom - Math.max(coveredBottom, shotTop));
-    if (drawableCssHeight <= 0) {
+    
+    // 计算crop区域在页面中的实际位置
+    const cropTop = shot.y + crop.y;
+    const cropBottom = cropTop + crop.height;
+    
+    // 计算需要绘制的部分
+    const drawStart = Math.max(coveredBottom, cropTop);
+    const drawEnd = cropBottom;
+    const drawHeight = drawEnd - drawStart;
+    
+    if (drawHeight <= 0) {
       continue;
     }
 
-    // 关键修复：crop.x 和 crop.y 是视口坐标，不需要随滚动变化
-    // cropTopCss 已经处理了垂直方向的重叠裁剪
+    // 计算源图像的裁剪区域
+    const cropOffsetY = drawStart - cropTop; // crop区域内的偏移
     const sourceX = Math.round(crop.x * scale);
-    const sourceY = Math.round((crop.y + cropTopCss) * scale);
+    const sourceY = Math.round((crop.y + cropOffsetY) * scale);
     const sourceWidth = Math.min(Math.round(crop.width * scale), image.width - sourceX);
     const sourceHeight = Math.min(
-      Math.round(drawableCssHeight * scale),
+      Math.round(drawHeight * scale),
       image.height - sourceY
     );
-    const destX = 0; // 水平方向从 0 开始
-    const destY = Math.round((Math.max(coveredBottom, shotTop) - firstY) * scale);
+    
+    // 计算目标位置
+    const destX = 0;
+    const destY = Math.round((drawStart - outputStartY) * scale);
 
-    // 确保不会超出 canvas 边界
-    if (sourceWidth > 0 && sourceHeight > 0 && destY + sourceHeight <= canvas.height) {
+    // 绘制到canvas
+    if (sourceWidth > 0 && sourceHeight > 0 && destY >= 0 && destY + sourceHeight <= canvas.height) {
       context.drawImage(
         image,
         sourceX,
@@ -238,8 +268,11 @@ async function stitchManualShots() {
         sourceWidth,
         sourceHeight
       );
+      
+      console.log(`[Stitch] Drew shot at y=${shot.y}, crop=${JSON.stringify(crop)}, dest=${destY}, height=${sourceHeight}`);
     }
-    coveredBottom = Math.max(coveredBottom, shotBottom);
+    
+    coveredBottom = Math.max(coveredBottom, cropBottom);
   }
 
   return new Promise((resolve, reject) => {

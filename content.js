@@ -647,16 +647,30 @@ if (window.screenshotExtensionInjected) {
       mode = 'region';
       const region = scrollShotState.selectedRegion;
       
-      // 计算区域在当前视口中的可见部分
+      // 计算区域相对于当前视口的位置
       const regionTopInViewport = region.y - scrollY;
       const regionLeftInViewport = region.x - scrollX;
+      const regionBottomInViewport = regionTopInViewport + region.height;
+      const regionRightInViewport = regionLeftInViewport + region.width;
       
+      // 计算区域与视口的交集
+      const visibleTop = Math.max(0, regionTopInViewport);
+      const visibleLeft = Math.max(0, regionLeftInViewport);
+      const visibleBottom = Math.min(window.innerHeight, regionBottomInViewport);
+      const visibleRight = Math.min(window.innerWidth, regionRightInViewport);
+      
+      // 裁剪区域（视口坐标系）
       crop = {
-        x: Math.max(0, regionLeftInViewport),
-        y: Math.max(0, regionTopInViewport),
-        width: Math.min(region.width, window.innerWidth - Math.max(0, regionLeftInViewport)),
-        height: Math.min(region.height, window.innerHeight - Math.max(0, regionTopInViewport))
+        x: visibleLeft,
+        y: visibleTop,
+        width: Math.max(0, visibleRight - visibleLeft),
+        height: Math.max(0, visibleBottom - visibleTop)
       };
+      
+      // 如果区域完全不在视口内，返回错误
+      if (crop.width <= 0 || crop.height <= 0) {
+        return { ok: false, error: 'Selected region is not visible' };
+      }
     }
 
     return {
