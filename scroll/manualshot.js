@@ -7,11 +7,13 @@ const autostart = params.get("autostart") === "1";
 const startButton = document.getElementById("start");
 const finishButton = document.getElementById("finish");
 const selectRegionButton = document.getElementById("selectRegion");
-const hideFixedInput = document.getElementById("hideFixed");
 const shotCount = document.getElementById("shotCount");
 const rangeText = document.getElementById("rangeText");
 const state = document.getElementById("state");
 const bar = document.getElementById("bar");
+
+// 从URL获取hideFixed参数
+const hideFixedFromUrl = params.get("hideFixed") === "1";
 
 const sampleIntervalMs = 420;
 const minScrollDelta = 24;
@@ -130,8 +132,10 @@ async function captureCurrentViewport(force = false) {
       });
       shots.sort((a, b) => a.y - b.y);
       lastCapturedY = y;
-      console.log(`[ScrollShot] Captured at y=${y}, mode=${mode}, total shots=${shots.length}`);
+      console.log(`[ScrollShot] Captured shot #${shots.length}: scrollY=${y}, mode=${mode}, crop=`, scroll.crop);
       updateReadout();
+    } else {
+      console.log(`[ScrollShot] Skipped duplicate at y=${y}`);
     }
   } finally {
     busy = false;
@@ -148,7 +152,6 @@ async function captureOrStop(force = false) {
     startButton.disabled = false;
     finishButton.disabled = true;
     selectRegionButton.disabled = false;
-    hideFixedInput.disabled = false;
     setState(error.message || "Capture stopped.");
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" }).catch(() => {});
   }
@@ -164,21 +167,27 @@ function updateReadout() {
   const first = shots[0];
   const last = shots[shots.length - 1];
   
-  // 根据mode计算实际覆盖的范围
   let covered;
   let totalHeight;
   
-  if (first.mode === "region" && first.crop && last.crop && metrics?.selectedRegionHeight) {
-    // 区域模式：计算已覆盖选区的高度
-    // first.y 是第一次截图时的页面滚动位置
-    // last.y 是最后一次截图时的页面滚动位置
-    const scrolledDistance = last.y - first.y;
+  if (first.mode === "region" && first.crop && last.crop) {
+    // 区域模式：计算crop区域覆盖的页面范围
+    // crop.y 是视口坐标，shot.y 是页面滚动位置
+    // 所以 crop 在页面中的位置 = shot.y + crop.y
     
-    // 已覆盖 = 滚动距离 + 第一个crop的高度
-    covered = Math.round(scrolledDistance + first.crop.height);
-    totalHeight = metrics.selectedRegionHeight;
+    const firstCropPageTop = first.y + first.crop.y;
+    const firstCropPageBottom = firstCropPageTop + first.crop.height;
     
-    console.log(`[UpdateReadout] Region mode: scrolled=${scrolledDistance}, firstCropHeight=${first.crop.height}, covered=${covered}, total=${totalHeight}`);
+    const lastCropPageTop = last.y + last.crop.y;
+    const lastCropPageBottom = lastCropPageTop + last.crop.height;
+    
+    // 已覆盖范围：从第一个crop顶部到最后一个crop底部
+    covered = Math.round(lastCropPageBottom - firstCropPageTop);
+    
+    // 总高度：选区的总高度
+    totalHeight = metrics?.selectedRegionHeight || covered;
+    
+    console.log(`[UpdateReadout] Region: first(${firstCropPageTop}-${firstCropPageBottom}), last(${lastCropPageTop}-${lastCropPageBottom}), covered=${covered}, total=${totalHeight}`);
   } else {
     // 页面模式：使用整个视口高度
     covered = Math.round(last.y + last.viewportHeight - first.y);
@@ -189,7 +198,7 @@ function updateReadout() {
   modeLabel = last.mode?.startsWith("region") ? "selected region" : last.mode === "element" ? "element" : "page";
   
   // 计算进度
-  if (totalHeight) {
+  if (totalHeight > 0) {
     const progress = Math.min(100, (covered / totalHeight) * 100);
     setProgress(progress);
     console.log(`[UpdateReadout] Progress: ${progress.toFixed(1)}% (${covered}/${totalHeight})`);
@@ -331,11 +340,17 @@ async function startSession() {
   // 如果有选区，保存选区高度到metrics中
   if (selected?.ok && selected.region) {
     metrics.selectedRegionHeight = selected.region.height;
-    console.log(`[StartSession] Selected region height: ${selected.region.height}px`);
+    console.log(`[StartSession] Selected region: width=${selected.region.width}, height=${selected.region.height}`);
+    console.log(`[StartSession] Viewport: width=${metrics.viewportWidth}, height=${metrics.viewportHeight}`);
+    
+    // 警告：如果选区高度小于视口高度，一次截图就能完成
+    if (selected.region.height <= metrics.viewportHeight) {
+      console.warn(`[StartSession] Selected region height (${selected.region.height}px) is less than viewport height (${metrics.viewportHeight}px). Single shot will capture the entire region.`);
+    }
   }
   await sendToTarget({
     type: "SCROLLSHOT_MARK_MANUAL_START",
-    hideFixed: hideFixedInput.checked
+    hideFixed: hideFixedFromUrl
   });
 
   shots = [];
@@ -346,7 +361,6 @@ async function startSession() {
   startButton.disabled = true;
   finishButton.disabled = false;
   selectRegionButton.disabled = true;
-  hideFixedInput.disabled = true;
   setState(`Capturing ${hasRegion ? "selected region" : "page"}. Scroll manually, then press Alt+Shift+S to finish.`);
   await focusTargetTab();
   await captureCurrentViewport(true);
@@ -383,7 +397,6 @@ async function finishSession() {
     setState(error.message || "Manual screenshot failed.");
     startButton.disabled = false;
     selectRegionButton.disabled = false;
-    hideFixedInput.disabled = false;
   } finally {
     await chrome.runtime.sendMessage({ type: "SCROLLSHOT_CLOSED" }).catch(() => {});
   }
@@ -394,7 +407,6 @@ startButton.addEventListener("click", () => {
     setState(error.message || "Could not start manual capture.");
     startButton.disabled = false;
     finishButton.disabled = true;
-    hideFixedInput.disabled = false;
   });
 });
 
