@@ -8,7 +8,6 @@ const startButton = document.getElementById("start");
 const finishButton = document.getElementById("finish");
 const selectRegionButton = document.getElementById("selectRegion");
 const hideFixedInput = document.getElementById("hideFixed");
-const contentWidthRegionInput = document.getElementById("contentWidthRegion");
 const shotCount = document.getElementById("shotCount");
 const rangeText = document.getElementById("rangeText");
 const state = document.getElementById("state");
@@ -150,7 +149,6 @@ async function captureOrStop(force = false) {
     finishButton.disabled = true;
     selectRegionButton.disabled = false;
     hideFixedInput.disabled = false;
-    contentWidthRegionInput.disabled = false;
     setState(error.message || "Capture stopped.");
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" }).catch(() => {});
   }
@@ -181,6 +179,8 @@ async function stitchManualShots() {
     throw new Error("No screenshots were captured.");
   }
 
+  console.log(`[Stitch] Starting with ${shots.length} shots`);
+
   const scale = metrics.devicePixelRatio || 1;
   const sorted = [...shots].sort((a, b) => a.y - b.y);
   
@@ -188,21 +188,22 @@ async function stitchManualShots() {
   const firstCrop = sorted[0].crop || { x: 0, y: 0, width: sorted[0].viewportWidth, height: sorted[0].viewportHeight };
   const outputCssWidth = Math.round(firstCrop.width);
   
-  // 计算输出高度：基于实际截取的crop区域，而不是整个视口
-  const firstY = sorted[0].y;
-  const last = sorted[sorted.length - 1];
+  console.log(`[Stitch] Output width: ${outputCssWidth}px`);
   
-  // 如果是区域模式，需要计算区域的总高度
-  let outputCssHeight;
-  if (sorted[0].mode?.startsWith('region')) {
-    // 区域模式：计算从第一个crop顶部到最后一个crop底部的高度
-    const firstCropTop = sorted[0].y + (sorted[0].crop?.y || 0);
-    const lastCropBottom = last.y + (last.crop?.y || 0) + (last.crop?.height || last.viewportHeight);
-    outputCssHeight = Math.round(lastCropBottom - firstCropTop);
-  } else {
-    // 页面模式：使用整个视口高度
-    outputCssHeight = Math.round(last.y + last.viewportHeight - firstY);
-  }
+  // 计算输出高度：从第一个截图的crop顶部到最后一个截图的crop底部
+  const firstShot = sorted[0];
+  const lastShot = sorted[sorted.length - 1];
+  
+  // 第一个crop在页面中的绝对位置
+  const firstCropPageY = firstShot.y + firstCrop.y;
+  // 最后一个crop在页面中的绝对位置  
+  const lastCrop = lastShot.crop || { x: 0, y: 0, width: lastShot.viewportWidth, height: lastShot.viewportHeight };
+  const lastCropPageY = lastShot.y + lastCrop.y;
+  const lastCropPageBottom = lastCropPageY + lastCrop.height;
+  
+  const outputCssHeight = Math.round(lastCropPageBottom - firstCropPageY);
+  
+  console.log(`[Stitch] First crop Y: ${firstCropPageY}, Last crop bottom: ${lastCropPageBottom}, Output height: ${outputCssHeight}px`);
 
   const maxPixels = 268_000_000;
   const pixelEstimate = outputCssWidth * outputCssHeight * scale * scale;
@@ -217,46 +218,47 @@ async function stitchManualShots() {
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 追踪已覆盖的区域（使用crop坐标系）
-  let coveredBottom = sorted[0].mode?.startsWith('region') 
-    ? sorted[0].y + (sorted[0].crop?.y || 0)
-    : firstY;
-  
-  const outputStartY = coveredBottom;
+  console.log(`[Stitch] Canvas size: ${canvas.width} x ${canvas.height} (CSS: ${outputCssWidth} x ${outputCssHeight})`);
 
-  for (const shot of sorted) {
+  // 追踪已覆盖到的页面位置（页面绝对坐标）
+  let coveredPageBottom = firstCropPageY;
+
+  for (let i = 0; i < sorted.length; i++) {
+    const shot = sorted[i];
     const image = await loadImage(shot.dataUrl);
     const crop = shot.crop || { x: 0, y: 0, width: shot.viewportWidth, height: shot.viewportHeight };
     
-    // 计算crop区域在页面中的实际位置
-    const cropTop = shot.y + crop.y;
-    const cropBottom = cropTop + crop.height;
+    // crop在页面中的绝对位置
+    const cropPageTop = shot.y + crop.y;
+    const cropPageBottom = cropPageTop + crop.height;
     
-    // 计算需要绘制的部分
-    const drawStart = Math.max(coveredBottom, cropTop);
-    const drawEnd = cropBottom;
-    const drawHeight = drawEnd - drawStart;
+    // 计算需要绘制的部分（避免重叠）
+    const drawPageTop = Math.max(coveredPageBottom, cropPageTop);
+    const drawPageBottom = cropPageBottom;
+    const drawHeight = drawPageBottom - drawPageTop;
     
     if (drawHeight <= 0) {
+      console.log(`[Stitch] Shot ${i}: skipped (already covered)`);
       continue;
     }
 
-    // 计算源图像的裁剪区域
-    const cropOffsetY = drawStart - cropTop; // crop区域内的偏移
-    const sourceX = Math.round(crop.x * scale);
-    const sourceY = Math.round((crop.y + cropOffsetY) * scale);
-    const sourceWidth = Math.min(Math.round(crop.width * scale), image.width - sourceX);
-    const sourceHeight = Math.min(
-      Math.round(drawHeight * scale),
-      image.height - sourceY
-    );
+    // 计算在crop内的偏移量
+    const offsetInCrop = drawPageTop - cropPageTop;
     
-    // 计算目标位置
+    // 源图像的裁剪区域（像素坐标）
+    const sourceX = Math.round(crop.x * scale);
+    const sourceY = Math.round((crop.y + offsetInCrop) * scale);
+    const sourceWidth = Math.round(crop.width * scale);
+    const sourceHeight = Math.round(drawHeight * scale);
+    
+    // 目标位置（相对于输出canvas的顶部）
     const destX = 0;
-    const destY = Math.round((drawStart - outputStartY) * scale);
+    const destY = Math.round((drawPageTop - firstCropPageY) * scale);
+
+    console.log(`[Stitch] Shot ${i}: pageY=${shot.y}, crop=(${crop.x},${crop.y},${crop.width}x${crop.height}), draw from ${drawPageTop} to ${drawPageBottom}, dest=${destY}`);
 
     // 绘制到canvas
-    if (sourceWidth > 0 && sourceHeight > 0 && destY >= 0 && destY + sourceHeight <= canvas.height) {
+    if (sourceWidth > 0 && sourceHeight > 0 && sourceX >= 0 && sourceY >= 0 && sourceX + sourceWidth <= image.width && sourceY + sourceHeight <= image.height) {
       context.drawImage(
         image,
         sourceX,
@@ -268,12 +270,14 @@ async function stitchManualShots() {
         sourceWidth,
         sourceHeight
       );
-      
-      console.log(`[Stitch] Drew shot at y=${shot.y}, crop=${JSON.stringify(crop)}, dest=${destY}, height=${sourceHeight}`);
+    } else {
+      console.warn(`[Stitch] Shot ${i}: invalid source region, skipping`);
     }
     
-    coveredBottom = Math.max(coveredBottom, cropBottom);
+    coveredPageBottom = Math.max(coveredPageBottom, cropPageBottom);
   }
+
+  console.log(`[Stitch] Complete. Final canvas: ${canvas.width} x ${canvas.height}`);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -311,7 +315,6 @@ async function startSession() {
   finishButton.disabled = false;
   selectRegionButton.disabled = true;
   hideFixedInput.disabled = true;
-  contentWidthRegionInput.disabled = true;
   setState(`Capturing ${hasRegion ? "selected region" : "page"}. Scroll manually, then press Alt+Shift+S to finish.`);
   await focusTargetTab();
   await captureCurrentViewport(true);
@@ -349,7 +352,6 @@ async function finishSession() {
     startButton.disabled = false;
     selectRegionButton.disabled = false;
     hideFixedInput.disabled = false;
-    contentWidthRegionInput.disabled = false;
   } finally {
     await chrome.runtime.sendMessage({ type: "SCROLLSHOT_CLOSED" }).catch(() => {});
   }
@@ -361,27 +363,24 @@ startButton.addEventListener("click", () => {
     startButton.disabled = false;
     finishButton.disabled = true;
     hideFixedInput.disabled = false;
-    contentWidthRegionInput.disabled = false;
   });
 });
 
 selectRegionButton.addEventListener("click", async () => {
   try {
     await ensureContentScript();
-    setState("Drag a rectangle on the page.");
+    setState("Drag a rectangle on the page to select the area.");
     selectRegionButton.disabled = true;
     await focusTargetTab();
     const response = await sendToTarget({ type: "SCROLLSHOT_SELECT_REGION" });
-    if (response?.ok && contentWidthRegionInput.checked) {
-      await sendToTarget({ type: "SCROLLSHOT_EXPAND_REGION_CONTENT_WIDTH" });
-    }
     hasRegion = Boolean(response?.ok);
     requireRegion = hasRegion;
-    setState(
-      hasRegion
-        ? `Region selected${contentWidthRegionInput.checked ? " with content width" : ""}. Click Start, then scroll.`
-        : "Region selection cancelled."
-    );
+    if (hasRegion) {
+      console.log('[ManualShot] Region selected:', response.region);
+      setState("Region selected. Click Start, then scroll manually.");
+    } else {
+      setState(response?.error || "Region selection cancelled.");
+    }
   } catch (error) {
     setState(error.message || "Could not select region.");
   } finally {

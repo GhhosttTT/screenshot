@@ -551,11 +551,12 @@ if (window.screenshotExtensionInjected) {
             width: Math.round(rect.width),
             height: Math.round(rect.height)
           };
+          console.log('[SelectRegion] Selected region:', scrollShotState.selectedRegion);
           cleanup();
           resolve({ ok: true, region: scrollShotState.selectedRegion });
         } else {
           cleanup();
-          resolve({ ok: false, error: 'Region too small' });
+          resolve({ ok: false, error: 'Region too small (minimum 50x50 pixels)' });
         }
       };
 
@@ -647,19 +648,24 @@ if (window.screenshotExtensionInjected) {
       mode = 'region';
       const region = scrollShotState.selectedRegion;
       
-      // 计算区域相对于当前视口的位置
-      const regionTopInViewport = region.y - scrollY;
+      console.log(`[ScrollInfo] Region (page coords): x=${region.x}, y=${region.y}, w=${region.width}, h=${region.height}`);
+      console.log(`[ScrollInfo] Current scroll: x=${scrollX}, y=${scrollY}`);
+      
+      // region坐标是页面绝对坐标，需要转换为视口坐标
       const regionLeftInViewport = region.x - scrollX;
-      const regionBottomInViewport = regionTopInViewport + region.height;
+      const regionTopInViewport = region.y - scrollY;
       const regionRightInViewport = regionLeftInViewport + region.width;
+      const regionBottomInViewport = regionTopInViewport + region.height;
       
-      // 计算区域与视口的交集
-      const visibleTop = Math.max(0, regionTopInViewport);
+      console.log(`[ScrollInfo] Region in viewport: left=${regionLeftInViewport}, top=${regionTopInViewport}, right=${regionRightInViewport}, bottom=${regionBottomInViewport}`);
+      
+      // 计算区域与视口的可见交集
       const visibleLeft = Math.max(0, regionLeftInViewport);
-      const visibleBottom = Math.min(window.innerHeight, regionBottomInViewport);
+      const visibleTop = Math.max(0, regionTopInViewport);
       const visibleRight = Math.min(window.innerWidth, regionRightInViewport);
+      const visibleBottom = Math.min(window.innerHeight, regionBottomInViewport);
       
-      // 裁剪区域（视口坐标系）
+      // crop是相对于视口左上角的坐标
       crop = {
         x: visibleLeft,
         y: visibleTop,
@@ -667,9 +673,11 @@ if (window.screenshotExtensionInjected) {
         height: Math.max(0, visibleBottom - visibleTop)
       };
       
+      console.log(`[ScrollInfo] Final crop (viewport coords): x=${crop.x}, y=${crop.y}, w=${crop.width}, h=${crop.height}`);
+      
       // 如果区域完全不在视口内，返回错误
       if (crop.width <= 0 || crop.height <= 0) {
-        return { ok: false, error: 'Selected region is not visible' };
+        return { ok: false, error: 'Selected region is not visible in current viewport' };
       }
     }
 
