@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>录制控制台</title>
+    <link rel="stylesheet" href="recorder.css" />
+  </head>
+  <body>
+    <main class="recorder">
+      <header>
+        <p>RECORDER</p>
+        <h1>标签页录制</h1>
+      </header>
+
+      <video id="preview" muted autoplay playsinline></video>
+
+      <section class="controls" aria-label="录制控制">
+        <button id="start" class="record" type="button">开始录制</button>
+        <button id="stop" class="stop" type="button" disabled>停止并保存</button>
+      </section>
+
+      <div class="meta">
+        <span id="timer">00:00</span>
+        <span id="state">等待开始</span>
+      </div>
+      <p id="message" class="message" role="status"></p>
+    </main>
+    <script src="recorder.js"></script>
+  </body>
+</html>

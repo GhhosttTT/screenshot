@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Screenshot Extension",
-  "version": "1.0.0",
-  "description": "快捷键驱动的区域截图工具 - 支持批量截图，自动保存到桌面",
+  "name": "Screenshot Pro",
+  "version": "2.0.0",
+  "description": "专业截图录屏工具 - 快速截图、滚动拼接长图、标签页录制",
   "permissions": [
     "activeTab",
     "storage",
     "downloads",
-    "scripting"
+    "scripting",
+    "tabCapture"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -29,28 +30,34 @@
         "default": "Ctrl+Shift+S",
         "mac": "Command+Shift+S"
       },
-      "description": "截取选定区域"
+      "description": "快速截图 - 截取选定区域"
     },
     "toggle-overlay": {
       "suggested_key": {
         "default": "Ctrl+Shift+Q",
         "mac": "Command+Shift+Q"
       },
-      "description": "激活/停用遮罩层"
+      "description": "激活/停用区域选择器"
     },
     "clear-overlay": {
       "suggested_key": {
         "default": "Ctrl+Shift+X",
         "mac": "Command+Shift+X"
       },
-      "description": "清除遮罩层"
+      "description": "清除选定区域"
     },
     "lock-overlay": {
       "suggested_key": {
         "default": "Ctrl+Shift+K",
         "mac": "Command+Shift+K"
       },
-      "description": "锁定/解锁遮罩层（切换调整模式）"
+      "description": "锁定/解锁区域（切换调整模式）"
+    },
+    "toggle-scroll-shot": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "开始/完成滚动长图截取"
     }
   },
   "options_page": "options/options.html",

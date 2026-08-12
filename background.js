@@ -9,6 +9,9 @@ const tabStates = new Map();
 // 当前会话的文件夹名称
 let currentSessionFolder = null;
 
+// 滚动截图会话管理
+let activeScrollSession = null;
+
 // 监听插件安装
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Screenshot Extension 已安装');
@@ -52,11 +55,16 @@ chrome.commands.onCommand.addListener(async (command) => {
       console.log('执行: lock-overlay');
       await lockOverlay(tab.id);
       break;
+    case 'toggle-scroll-shot':
+      console.log('执行: toggle-scroll-shot');
+      await toggleScrollShot(tab);
+      break;
   }
 });
 
-// 监听来自 Content Script 的消息
+// 监听来自 Content Script 和 Popup 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // 快速截图相关
   if (message.type === 'SAVE_AREA') {
     // 保存截图区域
     if (sender.tab && sender.tab.id) {
@@ -81,6 +89,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'GET_CURRENT_FOLDER') {
     // 获取当前文件夹名称
     sendResponse({ folderName: currentSessionFolder });
+  }
+  // Popup 请求相关
+  else if (message.type === 'TOGGLE_OVERLAY') {
+    // Popup 请求激活区域选择器
+    toggleOverlay(message.tabId).then(() => {
+      sendResponse({ success: true });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  } else if (message.type === 'OPEN_SCROLL_CONSOLE') {
+    // Popup 请求打开滚动截图控制台
+    openScrollConsole(message).then(() => {
+      sendResponse({ success: true });
+    }).catch(error => {
+      sendResponse({ success: false, error: error.message });
+    });
+    return true;
+  }
+  // 滚动截图会话管理
+  else if (message.type === 'SCROLLSHOT_OPENED') {
+    activeScrollSession = {
+      windowId: message.windowId,
+      tabId: message.tabId
+    };
+    sendResponse({ ok: true });
+    return true;
+  } else if (message.type === 'SCROLLSHOT_CLOSED') {
+    activeScrollSession = null;
+    sendResponse({ ok: true });
+    return true;
   }
 });
 
@@ -331,13 +370,71 @@ async function downloadImage(blob, filename) {
  * 增加截图计数
  */
 async function incrementScreenshotCount() {
-  const result = await chrome.storage.local.get('screenshotCount');
-  const count = (result.screenshotCount || 0) + 1;
-  await chrome.storage.local.set({ screenshotCount: count });
+  const result = await chrome.storage.local.get('quickScreenshotCount');
+  const count = (result.quickScreenshotCount || 0) + 1;
+  await chrome.storage.local.set({ quickScreenshotCount: count });
   
   // 更新徽章
   chrome.action.setBadgeText({ text: String(count) });
-  chrome.action.setBadgeBackgroundColor({ color: '#0078ff' });
+  chrome.action.setBadgeBackgroundColor({ color: '#667eea' });
+  
+  // 通知 popup 更新统计
+  chrome.runtime.sendMessage({ type: 'STATS_UPDATED' }).catch(() => {});
+}
+
+/**
+ * 增加滚动截图计数
+ */
+async function incrementScrollScreenshotCount() {
+  const result = await chrome.storage.local.get('scrollScreenshotCount');
+  const count = (result.scrollScreenshotCount || 0) + 1;
+  await chrome.storage.local.set({ scrollScreenshotCount: count });
+  
+  // 通知 popup 更新统计
+  chrome.runtime.sendMessage({ type: 'STATS_UPDATED' }).catch(() => {});
+}
+
+/**
+ * 打开滚动截图控制台
+ */
+async function openScrollConsole(params) {
+  const { tabId, windowId, title, hideFixed, useRegion } = params;
+  
+  const url = chrome.runtime.getURL(
+    `scroll/manualshot.html?tabId=${tabId}&windowId=${windowId}&title=${encodeURIComponent(title || 'page')}&hideFixed=${hideFixed ? '1' : '0'}&useRegion=${useRegion ? '1' : '0'}`
+  );
+  
+  const win = await chrome.windows.create({
+    url,
+    type: 'popup',
+    width: 410,
+    height: 540
+  });
+  
+  activeScrollSession = { windowId: win.id, tabId };
+}
+
+/**
+ * 快捷键触发滚动截图
+ */
+async function toggleScrollShot(tab) {
+  if (activeScrollSession?.windowId) {
+    // 如果控制台已打开，发送完成消息
+    chrome.runtime.sendMessage({ type: 'SCROLLSHOT_FINISH' }).catch(() => {});
+    return;
+  }
+  
+  // 如果控制台未打开，打开控制台并自动开始
+  if (tab && tab.id) {
+    await openScrollConsole({
+      tabId: tab.id,
+      windowId: tab.windowId,
+      title: tab.title || 'page',
+      hideFixed: true,
+      useRegion: false,
+      autostart: true
+    });
+  }
 }
 
 /**
