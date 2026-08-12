@@ -163,12 +163,35 @@ function updateReadout() {
   }
   const first = shots[0];
   const last = shots[shots.length - 1];
-  const covered = Math.round(last.y + last.viewportHeight - first.y);
+  
+  // 根据mode计算实际覆盖的范围
+  let covered;
+  if (first.mode === "region" && first.crop && last.crop) {
+    // 区域模式：计算crop区域的实际覆盖范围
+    const firstCropTop = first.y + first.crop.y;
+    const lastCropBottom = last.y + last.crop.y + last.crop.height;
+    covered = Math.round(lastCropBottom - firstCropTop);
+  } else {
+    // 页面模式：使用整个视口高度
+    covered = Math.round(last.y + last.viewportHeight - first.y);
+  }
+  
   rangeText.textContent = `${covered} px`;
   modeLabel = last.mode?.startsWith("region") ? "selected region" : last.mode === "element" ? "element" : "page";
-  if (metrics?.totalHeight) {
-    setProgress((covered / metrics.totalHeight) * 100);
+  
+  // 计算进度
+  if (metrics) {
+    let totalHeight = metrics.totalHeight;
+    
+    // 如果是区域模式且有选区高度信息，使用选区高度
+    if (first.mode === "region" && metrics.selectedRegionHeight) {
+      totalHeight = metrics.selectedRegionHeight;
+      console.log(`[UpdateReadout] Using region height ${totalHeight}px for progress, covered: ${covered}px`);
+    }
+    
+    setProgress((covered / totalHeight) * 100);
   }
+  
   if (running) {
     setState(`Capturing ${modeLabel}. Keep scrolling, then press Alt+Shift+S to finish.`);
   }
@@ -300,6 +323,12 @@ async function startSession() {
   requireRegion = hasRegion;
   if (requireRegion && !selected?.ok) {
     throw new Error("The selected region is gone. Click Select Region again.");
+  }
+  
+  // 如果有选区，保存选区高度到metrics中
+  if (selected?.ok && selected.region) {
+    metrics.selectedRegionHeight = selected.region.height;
+    console.log(`[StartSession] Selected region height: ${selected.region.height}px`);
   }
   await sendToTarget({
     type: "SCROLLSHOT_MARK_MANUAL_START",
