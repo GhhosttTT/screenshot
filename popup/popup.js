@@ -1,9 +1,9 @@
-/**
- * Popup Script - 重新设计版
- * 管理三大功能：快速截图、滚动长图、视频录制
+﻿/**
+ * Popup Script - 閲嶆柊璁捐鐗?
+ * 绠＄悊涓夊ぇ鍔熻兘锛氬揩閫熸埅鍥俱€佹粴鍔ㄩ暱鍥俱€佽棰戝綍鍒?
  */
 
-// DOM 元素
+// DOM 鍏冪礌
 const quickCountEl = document.getElementById('quick-count');
 const scrollCountEl = document.getElementById('scroll-count');
 const activateRegionBtn = document.getElementById('activate-region-btn');
@@ -11,10 +11,9 @@ const openScrollConsoleBtn = document.getElementById('open-scroll-console-btn');
 const openRecorderBtn = document.getElementById('open-recorder-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const helpBtn = document.getElementById('help-btn');
-const hideFixedCheckbox = document.getElementById('hide-fixed');
 const recordAudioCheckbox = document.getElementById('record-audio');
 
-// 选项卡切换
+// 閫夐」鍗″垏鎹?
 const tabBtns = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
@@ -22,28 +21,28 @@ tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     const targetTab = btn.dataset.tab;
     
-    // 移除所有激活状态
+    // 绉婚櫎鎵€鏈夋縺娲荤姸鎬?
     tabBtns.forEach(b => b.classList.remove('active'));
     tabContents.forEach(c => c.classList.remove('active'));
     
-    // 激活当前选项卡
+    // 婵€娲诲綋鍓嶉€夐」鍗?
     btn.classList.add('active');
     document.getElementById(`tab-${targetTab}`).classList.add('active');
   });
 });
 
-// 加载统计数据
+// 鍔犺浇缁熻鏁版嵁
 async function loadStats() {
   try {
     const result = await chrome.storage.local.get(['quickScreenshotCount', 'scrollScreenshotCount']);
     quickCountEl.textContent = result.quickScreenshotCount || 0;
     scrollCountEl.textContent = result.scrollScreenshotCount || 0;
   } catch (error) {
-    console.error('加载统计数据失败:', error);
+    console.error('鍔犺浇缁熻鏁版嵁澶辫触:', error);
   }
 }
 
-// 获取当前激活的标签页
+// 鑾峰彇褰撳墠婵€娲荤殑鏍囩椤?
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
@@ -55,12 +54,12 @@ async function getActiveTab() {
   return tab;
 }
 
-// 快速截图 - 激活区域选择器
+// 蹇€熸埅鍥?- 婵€娲诲尯鍩熼€夋嫨鍣?
 activateRegionBtn.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab();
     
-    // 发送消息给 background 激活区域选择器
+    // 鍙戦€佹秷鎭粰 background 婵€娲诲尯鍩熼€夋嫨鍣?
     await chrome.runtime.sendMessage({
       type: 'TOGGLE_OVERLAY',
       tabId: tab.id
@@ -68,44 +67,41 @@ activateRegionBtn.addEventListener('click', async () => {
     
     window.close();
   } catch (error) {
-    alert(error.message || '无法激活区域选择器');
+    alert(error.message || 'Could not activate region selector.');
   }
 });
 
-// 滚动长图 - 打开控制台
+// 婊氬姩闀垮浘 - 鎵撳紑鎺у埗鍙?
 openScrollConsoleBtn.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab();
-    const hideFixed = hideFixedCheckbox.checked;
     
-    // 发送消息给 background 打开滚动截图控制台
+    // 鍙戦€佹秷鎭粰 background 鎵撳紑婊氬姩鎴浘鎺у埗鍙?
     await chrome.runtime.sendMessage({
       type: 'OPEN_SCROLL_CONSOLE',
       tabId: tab.id,
       windowId: tab.windowId,
-      title: tab.title || 'page',
-      hideFixed: hideFixed,
-      useRegion: false  // 总是从控制台内选择区域
+      title: tab.title || 'page'
     });
     
     window.close();
   } catch (error) {
-    alert(error.message || '无法打开滚动截图控制台');
+    alert(error.message || 'Could not open scroll capture console.');
   }
 });
 
-// 视频录制 - 打开录制器
+// 瑙嗛褰曞埗 - 鎵撳紑褰曞埗鍣?
 openRecorderBtn.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab();
     const includeAudio = recordAudioCheckbox.checked;
     
-    // 获取媒体流 ID
+    // 鑾峰彇濯掍綋娴?ID
     const streamId = await chrome.tabCapture.getMediaStreamId({ 
       targetTabId: tab.id 
     });
     
-    // 打开录制器窗口
+    // 鎵撳紑褰曞埗鍣ㄧ獥鍙?
     const url = chrome.runtime.getURL(
       `recorder/recorder.html?streamId=${encodeURIComponent(streamId)}&audio=${includeAudio ? '1' : '0'}`
     );
@@ -119,53 +115,53 @@ openRecorderBtn.addEventListener('click', async () => {
     
     window.close();
   } catch (error) {
-    alert(error.message || '无法打开录制器');
+    alert(error.message || 'Could not open recorder.');
   }
 });
 
-// 设置按钮
+// 璁剧疆鎸夐挳
 settingsBtn.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
   window.close();
 });
 
-// 帮助按钮
+// 甯姪鎸夐挳
 helpBtn.addEventListener('click', () => {
   const helpText = `
-Screenshot Pro - 使用帮助
+Screenshot Pro - 浣跨敤甯姪
 
-【快速截图模式】
-1. 按 Ctrl+Shift+Q 激活区域选择器
-2. 拖拽鼠标选择截图区域
-3. 按 Ctrl+Shift+S 快速截图
-4. 按 Ctrl+Shift+K 锁定区域（可点击下方元素）
-5. 按 Ctrl+Shift+X 清除区域
+銆愬揩閫熸埅鍥炬ā寮忋€?
+1. 鎸?Ctrl+Shift+Q 婵€娲诲尯鍩熼€夋嫨鍣?
+2. 鎷栨嫿榧犳爣閫夋嫨鎴浘鍖哄煙
+3. 鎸?Ctrl+Shift+S 蹇€熸埅鍥?
+4. 鎸?Ctrl+Shift+K 閿佸畾鍖哄煙锛堝彲鐐瑰嚮涓嬫柟鍏冪礌锛?
+5. 鎸?Ctrl+Shift+X 娓呴櫎鍖哄煙
 
-【滚动长图模式】
-1. 点击"打开滚动截图控制台"
-2. 可选：框选区域
-3. 点击 Start，手动滚动页面
-4. 按 Alt+Shift+S 完成并拼接长图
+銆愭粴鍔ㄩ暱鍥炬ā寮忋€?
+1. 鐐瑰嚮"鎵撳紑婊氬姩鎴浘鎺у埗鍙?
+2. 鍙€夛細妗嗛€夊尯鍩?
+3. 鐐瑰嚮 Start锛屾墜鍔ㄦ粴鍔ㄩ〉闈?
+4. 鎸?Alt+Shift+S 瀹屾垚骞舵嫾鎺ラ暱鍥?
 
-【视频录制模式】
-1. 点击"打开录制控制台"
-2. 点击开始录制
-3. 操作页面
-4. 点击停止并保存为 WebM
+銆愯棰戝綍鍒舵ā寮忋€?
+1. 鐐瑰嚮"鎵撳紑褰曞埗鎺у埗鍙?
+2. 鐐瑰嚮寮€濮嬪綍鍒?
+3. 鎿嶄綔椤甸潰
+4. 鐐瑰嚮鍋滄骞朵繚瀛樹负 WebM
 
-提示：
-- 快速截图保存到 PPT_Screenshots 文件夹
-- 滚动长图会自动去重和拼接
-- 录屏只支持普通网页，不支持受保护页面
+鎻愮ず锛?
+- 蹇€熸埅鍥句繚瀛樺埌 PPT_Screenshots 鏂囦欢澶?
+- 婊氬姩闀垮浘浼氳嚜鍔ㄥ幓閲嶅拰鎷兼帴
+- 褰曞睆鍙敮鎸佹櫘閫氱綉椤碉紝涓嶆敮鎸佸彈淇濇姢椤甸潰
   `;
 
   alert(helpText);
 });
 
-// 初始化
+// 鍒濆鍖?
 loadStats();
 
-// 监听来自 background 的统计更新
+// 鐩戝惉鏉ヨ嚜 background 鐨勭粺璁℃洿鏂?
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'STATS_UPDATED') {
     loadStats();

@@ -7,13 +7,13 @@ const autostart = params.get("autostart") === "1";
 const startButton = document.getElementById("start");
 const finishButton = document.getElementById("finish");
 const selectRegionButton = document.getElementById("selectRegion");
+const contentWidthRegionInput = document.getElementById("contentWidthRegion");
 const shotCount = document.getElementById("shotCount");
 const rangeText = document.getElementById("rangeText");
 const state = document.getElementById("state");
 const bar = document.getElementById("bar");
 
 // 从URL获取hideFixed参数
-const hideFixedFromUrl = params.get("hideFixed") === "1";
 
 const sampleIntervalMs = 420;
 const minScrollDelta = 24;
@@ -23,9 +23,10 @@ let busy = false;
 let shots = [];
 let pollId;
 let metrics;
-let lastCapturedY = null;
+let lastCapturedPosition = null;
 let finishing = false;
 let captureMode = null;
+let captureScrollKey = null;
 let modeLabel = "page";
 let hasRegion = false;
 let requireRegion = false;
@@ -51,7 +52,7 @@ function filenameFromTitle(title) {
 async function ensureContentScript() {
   await chrome.scripting.executeScript({
     target: { tabId: targetTabId },
-    files: ["content.js"]
+    files: ["scroll/scrollshot-content.js"]
   });
 }
 
@@ -114,28 +115,40 @@ async function captureCurrentViewport(force = false) {
     }
 
     const y = Math.round(scroll.y);
-    const changedEnough = lastCapturedY === null || Math.abs(y - lastCapturedY) >= minScrollDelta;
-    
-    console.log(`[ScrollShot] Poll: y=${y}, lastY=${lastCapturedY}, changed=${changedEnough}, crop=${JSON.stringify(scroll.crop)}`);
-    
+    const scrollKey = scroll.scrollKey || mode;
+    if (!captureScrollKey) {
+      captureScrollKey = scrollKey;
+    } else if (captureScrollKey !== scrollKey) {
+      if (requireRegion) {
+        throw new Error("Capture target changed. Select the region again and retry.");
+      }
+      return;
+    }
+
+    const changedEnough =
+      lastCapturedPosition === null ||
+      lastCapturedPosition.key !== scrollKey ||
+      Math.abs(y - lastCapturedPosition.y) >= minScrollDelta;
+    console.log(`[ScrollShot] Poll: key=${scrollKey}, y=${y}, last=${lastCapturedPosition?.y ?? "null"}, changed=${changedEnough}, crop=${JSON.stringify(scroll.crop)}`);
     if (!force && !changedEnough) {
       return;
     }
 
     const dataUrl = await chrome.tabs.captureVisibleTab(targetWindowId, { format: "png" });
-    const duplicate = shots.some((shot) => Math.abs(shot.y - y) < minScrollDelta);
+    const duplicate = shots.some((shot) => shot.scrollKey === scrollKey && Math.abs(shot.y - y) < minScrollDelta);
     if (!duplicate) {
       shots.push({
         y,
         mode,
+        scrollKey,
         crop: scroll.crop,
         dataUrl,
         viewportHeight: scroll.viewportHeight,
         viewportWidth: scroll.viewportWidth
       });
       shots.sort((a, b) => a.y - b.y);
-      lastCapturedY = y;
-      console.log(`[ScrollShot] Captured shot #${shots.length}: scrollY=${y}, mode=${mode}, crop=`, scroll.crop);
+      lastCapturedPosition = { key: scrollKey, y };
+      console.log(`[ScrollShot] Captured shot #${shots.length}: key=${scrollKey}, scrollY=${y}, mode=${mode}, crop=`, scroll.crop);
       updateReadout();
     } else {
       console.log(`[ScrollShot] Skipped duplicate at y=${y}`);
@@ -155,6 +168,7 @@ async function captureOrStop(force = false) {
     startButton.disabled = false;
     finishButton.disabled = true;
     selectRegionButton.disabled = false;
+    contentWidthRegionInput.disabled = false;
     setState(error.message || "Capture stopped.");
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" }).catch(() => {});
   }
@@ -353,12 +367,13 @@ async function startSession() {
   }
   await sendToTarget({
     type: "SCROLLSHOT_MARK_MANUAL_START",
-    hideFixed: hideFixedFromUrl
+    hideFixed: true
   });
 
   shots = [];
-  lastCapturedY = null;
+  lastCapturedPosition = null;
   captureMode = null;
+  captureScrollKey = null;
   running = true;
   finishing = false;
   startButton.disabled = true;
@@ -368,7 +383,7 @@ async function startSession() {
   console.log(`[StartSession] ========== SESSION STARTED ==========`);
   console.log(`[StartSession] hasRegion=${hasRegion}, requireRegion=${requireRegion}`);
   console.log(`[StartSession] sampleIntervalMs=${sampleIntervalMs}`);
-  
+  contentWidthRegionInput.disabled = true;
   setState(`Capturing ${hasRegion ? "selected region" : "page"}. Scroll manually, then press Alt+Shift+S to finish.`);
   await focusTargetTab();
   
@@ -430,6 +445,7 @@ async function finishSession() {
     setState(error.message || "Manual screenshot failed.");
     startButton.disabled = false;
     selectRegionButton.disabled = false;
+    contentWidthRegionInput.disabled = false;
   } finally {
     await chrome.runtime.sendMessage({ type: "SCROLLSHOT_CLOSED" }).catch(() => {});
   }
@@ -440,6 +456,7 @@ startButton.addEventListener("click", () => {
     setState(error.message || "Could not start manual capture.");
     startButton.disabled = false;
     finishButton.disabled = true;
+    contentWidthRegionInput.disabled = false;
   });
 });
 
@@ -450,11 +467,14 @@ selectRegionButton.addEventListener("click", async () => {
     selectRegionButton.disabled = true;
     await focusTargetTab();
     const response = await sendToTarget({ type: "SCROLLSHOT_SELECT_REGION" });
+    if (response?.ok && contentWidthRegionInput.checked) {
+      await sendToTarget({ type: "SCROLLSHOT_EXPAND_REGION_CONTENT_WIDTH" });
+    }
     hasRegion = Boolean(response?.ok);
     requireRegion = hasRegion;
     if (hasRegion) {
       console.log('[ManualShot] Region selected:', response.region);
-      setState("Region selected. Click Start, then scroll manually.");
+      setState(`Region selected${contentWidthRegionInput.checked ? " with content width" : ""}. Click Start, then scroll manually.`);
     } else {
       setState(response?.error || "Region selection cancelled.");
     }

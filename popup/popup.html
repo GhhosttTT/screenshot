@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -8,125 +8,117 @@
 </head>
 <body>
   <div class="popup-container">
-    <!-- 头部 -->
+    <!-- 澶撮儴 -->
     <div class="header">
       <img src="../icons/icon48.png" alt="Logo" class="logo">
       <h1>Screenshot Pro</h1>
-      <p class="subtitle">专业截图录屏工具</p>
+      <p class="subtitle">涓撲笟鎴浘褰曞睆宸ュ叿</p>
     </div>
 
-    <!-- 统计信息 -->
+    <!-- 缁熻淇℃伅 -->
     <div class="stats">
       <div class="stat-item">
-        <span class="stat-label">快速截图:</span>
+        <span class="stat-label">蹇€熸埅鍥?</span>
         <span class="stat-value" id="quick-count">0</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">长图拼接:</span>
+        <span class="stat-label">闀垮浘鎷兼帴:</span>
         <span class="stat-value" id="scroll-count">0</span>
       </div>
     </div>
 
-    <!-- 功能选项卡 -->
+    <!-- 鍔熻兘閫夐」鍗?-->
     <div class="tabs">
       <button class="tab-btn active" data-tab="quick">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" fill="none" stroke-width="2"/>
           <rect x="5" y="5" width="6" height="6" fill="currentColor" opacity="0.3"/>
         </svg>
-        快速截图
+        蹇€熸埅鍥?
       </button>
       <button class="tab-btn" data-tab="scroll">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 2v12M5 9l3 3 3-3" stroke="currentColor" fill="none" stroke-width="2"/>
         </svg>
-        滚动长图
+        婊氬姩闀垮浘
       </button>
       <button class="tab-btn" data-tab="record">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <circle cx="8" cy="8" r="5" fill="currentColor"/>
         </svg>
-        视频录制
+        瑙嗛褰曞埗
       </button>
     </div>
 
-    <!-- 快速截图面板 -->
+    <!-- 蹇€熸埅鍥鹃潰鏉?-->
     <div class="tab-content active" id="tab-quick">
       <div class="section">
-        <h3>区域选择 + 快速截图</h3>
-        <p class="hint">框选区域后，可连续快速截图</p>
+        <h3>鍖哄煙閫夋嫨 + 蹇€熸埅鍥?/h3>
+        <p class="hint">妗嗛€夊尯鍩熷悗锛屽彲杩炵画蹇€熸埅鍥?/p>
         
         <div class="shortcuts-compact">
           <div class="shortcut-row">
             <kbd>Ctrl+Shift+Q</kbd>
-            <span>激活/停用区域选择</span>
+            <span>婵€娲?鍋滅敤鍖哄煙閫夋嫨</span>
           </div>
           <div class="shortcut-row">
             <kbd>Ctrl+Shift+S</kbd>
-            <span>快速截图</span>
+            <span>蹇€熸埅鍥?/span>
           </div>
           <div class="shortcut-row">
             <kbd>Ctrl+Shift+K</kbd>
-            <span>锁定区域（可点击下方）</span>
+            <span>閿佸畾鍖哄煙锛堝彲鐐瑰嚮涓嬫柟锛?/span>
           </div>
           <div class="shortcut-row">
             <kbd>Ctrl+Shift+X</kbd>
-            <span>清除区域</span>
+            <span>娓呴櫎鍖哄煙</span>
           </div>
-        </div>
 
         <button id="activate-region-btn" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 2h12v12H2V2zm1 1v10h10V3H3z"/>
           </svg>
-          激活区域选择器
+          婵€娲诲尯鍩熼€夋嫨鍣?
         </button>
       </div>
     </div>
 
-    <!-- 滚动长图面板 -->
+    <!-- 婊氬姩闀垮浘闈㈡澘 -->
     <div class="tab-content" id="tab-scroll">
       <div class="section">
-        <h3>手动滚动截图</h3>
-        <p class="hint">滚动页面时自动采样，最后拼接成长图</p>
-
-        <div class="options">
-          <label class="option-row">
-            <input type="checkbox" id="hide-fixed" checked>
-            <span>隐藏悬浮元素</span>
-          </label>
-        </div>
+        <h3>鎵嬪姩婊氬姩鎴浘</h3>
+        <p class="hint">婊氬姩椤甸潰鏃惰嚜鍔ㄩ噰鏍凤紝鏈€鍚庢嫾鎺ユ垚闀垮浘</p>
 
         <button id="open-scroll-console-btn" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 3h12v10H2V3zm1 1v8h10V4H3z"/>
             <path d="M8 6v4M6 8h4" stroke="white" fill="none" stroke-width="1.5"/>
           </svg>
-          打开滚动截图控制台
+          鎵撳紑婊氬姩鎴浘鎺у埗鍙?
         </button>
 
         <div class="info-box">
-          <p><strong>使用说明：</strong></p>
+          <p><strong>浣跨敤璇存槑锛?/strong></p>
           <ol>
-            <li>点击打开控制台</li>
-            <li>可选：框选区域</li>
-            <li>点击 Start，手动滚动页面</li>
-            <li>按 Alt+Shift+S 完成</li>
+            <li>鐐瑰嚮鎵撳紑鎺у埗鍙?/li>
+            <li>鍙€夛細妗嗛€夊尯鍩?/li>
+            <li>鐐瑰嚮 Start锛屾墜鍔ㄦ粴鍔ㄩ〉闈?/li>
+            <li>鎸?Alt+Shift+S 瀹屾垚</li>
           </ol>
         </div>
       </div>
     </div>
 
-    <!-- 视频录制面板 -->
+    <!-- 瑙嗛褰曞埗闈㈡澘 -->
     <div class="tab-content" id="tab-record">
       <div class="section">
-        <h3>标签页录制</h3>
-        <p class="hint">录制当前标签页为 WebM 视频</p>
+        <h3>鏍囩椤靛綍鍒?/h3>
+        <p class="hint">褰曞埗褰撳墠鏍囩椤典负 WebM 瑙嗛</p>
 
         <div class="options">
           <label class="option-row">
             <input type="checkbox" id="record-audio" checked>
-            <span>包含标签页声音</span>
+            <span>鍖呭惈鏍囩椤靛０闊?/span>
           </label>
         </div>
 
@@ -134,30 +126,30 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <circle cx="8" cy="8" r="4" fill="currentColor"/>
           </svg>
-          打开录制控制台
+          鎵撳紑褰曞埗鎺у埗鍙?
         </button>
 
         <div class="info-box">
-          <p><strong>注意事项：</strong></p>
+          <p><strong>娉ㄦ剰浜嬮」锛?/strong></p>
           <ul>
-            <li>保存格式为 WebM</li>
-            <li>受保护页面无法录制</li>
-            <li>录制期间保持窗口打开</li>
+            <li>淇濆瓨鏍煎紡涓?WebM</li>
+            <li>鍙椾繚鎶ら〉闈㈡棤娉曞綍鍒?/li>
+            <li>褰曞埗鏈熼棿淇濇寔绐楀彛鎵撳紑</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- 底部操作 -->
+    <!-- 搴曢儴鎿嶄綔 -->
     <div class="footer-actions">
-      <button id="settings-btn" class="btn-icon" title="设置">
+      <button id="settings-btn" class="btn-icon" title="璁剧疆">
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
           <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
         </svg>
       </button>
       <span class="version">v2.0.0</span>
-      <button id="help-btn" class="btn-icon" title="帮助">
+      <button id="help-btn" class="btn-icon" title="甯姪">
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
           <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>

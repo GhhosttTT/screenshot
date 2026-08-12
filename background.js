@@ -398,10 +398,10 @@ async function incrementScrollScreenshotCount() {
  * 打开滚动截图控制台
  */
 async function openScrollConsole(params) {
-  const { tabId, windowId, title, hideFixed, useRegion } = params;
+  const { tabId, windowId, title, autostart } = params;
   
   const url = chrome.runtime.getURL(
-    `scroll/manualshot.html?tabId=${tabId}&windowId=${windowId}&title=${encodeURIComponent(title || 'page')}&hideFixed=${hideFixed ? '1' : '0'}&useRegion=${useRegion ? '1' : '0'}`
+    `scroll/manualshot.html?tabId=${tabId}&windowId=${windowId}&title=${encodeURIComponent(title || 'page')}${autostart ? '&autostart=1' : ''}`
   );
   
   const win = await chrome.windows.create({
@@ -430,8 +430,6 @@ async function toggleScrollShot(tab) {
       tabId: tab.id,
       windowId: tab.windowId,
       title: tab.title || 'page',
-      hideFixed: true,
-      useRegion: false,
       autostart: true
     });
   }

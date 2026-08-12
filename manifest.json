@@ -46,6 +46,9 @@
       },
       "description": "清除选定区域"
     },
+    "lock-overlay": {
+      "description": "锁定/解锁区域（切换调整模式）"
+    },
     "toggle-scroll-shot": {
       "suggested_key": {
         "default": "Alt+Shift+S"
