@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "Screenshot Pro",
+  "version": "2.0.0",
+  "description": "专业截图录屏工具 - 快速截图、滚动拼接长图、标签页录制",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads",
+    "scripting",
+    "tabCapture"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "commands": {
+    "capture-screenshot": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "快速截图 - 截取选定区域"
+    },
+    "toggle-overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Q",
+        "mac": "Command+Shift+Q"
+      },
+      "description": "激活/停用区域选择器"
+    },
+    "clear-overlay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+X",
+        "mac": "Command+Shift+X"
+      },
+      "description": "清除选定区域"
+    },
+    "toggle-scroll-shot": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "开始/完成滚动长图截取"
+    }
+  },
+  "options_page": "options/options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

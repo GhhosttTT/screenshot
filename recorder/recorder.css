@@ -1,0 +1,126 @@
+:root {
+  --ink: #17201d;
+  --muted: #60706a;
+  --paper: #f5f1e7;
+  --panel: #fffdf8;
+  --line: #d7ded7;
+  --accent: #0f766e;
+  --danger: #b3312b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    linear-gradient(160deg, rgba(15, 118, 110, 0.18), transparent 48%),
+    var(--paper);
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.recorder {
+  width: min(100vw, 430px);
+  min-height: 100vh;
+  padding: 18px;
+}
+
+header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+header p {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: 1px solid #c9d4ce;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, rgba(23, 32, 29, 0.08), transparent),
+    #26302c;
+  box-shadow: 0 18px 42px rgba(18, 70, 66, 0.16);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.controls button {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.record {
+  color: #fbfff8;
+  background: var(--accent);
+}
+
+.stop {
+  color: #fff9f5;
+  background: var(--danger);
+}
+
+.controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.78);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#timer {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+}
+
+.message {
+  min-height: 44px;
+  margin: 14px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}

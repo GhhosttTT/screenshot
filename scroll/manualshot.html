@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual ScrollShot</title>
+    <link rel="stylesheet" href="manualshot.css" />
+  </head>
+  <body>
+    <main class="manual">
+      <header>
+        <p>MANUAL SHOT</p>
+        <h1>Manual Shot</h1>
+      </header>
+
+      <section class="readout">
+        <div>
+          <span>Samples</span>
+          <strong id="shotCount">0</strong>
+        </div>
+        <div>
+          <span>Range</span>
+          <strong id="rangeText">0 px</strong>
+        </div>
+      </section>
+
+      <label class="toggle-row">
+        <input id="hideFixed" type="checkbox" checked />
+        <span>Hide floating and sticky elements</span>
+      </label>
+
+      <label class="toggle-row">
+        <input id="contentWidthRegion" type="checkbox" checked />
+        <span>Expand selected region to content width</span>
+      </label>
+
+      <button id="selectRegion" class="select-region" type="button">Select Region</button>
+
+      <div class="controls">
+        <button id="start" class="start" type="button">Start</button>
+        <button id="finish" class="finish" type="button" disabled>Finish & Save</button>
+      </div>
+
+      <div class="bar" aria-hidden="true">
+        <div id="bar"></div>
+      </div>
+
+      <p id="state" class="state">Click Start, then scroll the page manually.</p>
+      <p class="shortcut">Shortcut: Alt+Shift+S to start / finish</p>
+    </main>
+    <script src="manualshot.js"></script>
+  </body>
+</html>
