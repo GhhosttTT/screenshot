@@ -8,7 +8,8 @@
     "storage",
     "downloads",
     "scripting",
-    "tabCapture"
+    "tabCapture",
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -23,6 +24,9 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "scroll/manualshot.html"
   },
   "commands": {
     "capture-screenshot": {

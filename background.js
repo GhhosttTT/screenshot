@@ -431,10 +431,26 @@ async function incrementScrollScreenshotCount() {
  */
 async function openScrollConsole(params) {
   const { tabId, windowId, title, autostart } = params;
-  
-  const url = chrome.runtime.getURL(
-    `scroll/manualshot.html?tabId=${tabId}&windowId=${windowId}&title=${encodeURIComponent(title || 'page')}${autostart ? '&autostart=1' : ''}`
-  );
+
+  const path =
+    `scroll/manualshot.html?tabId=${tabId}&windowId=${windowId}&title=${encodeURIComponent(title || 'page')}${autostart ? '&autostart=1' : ''}`;
+
+  if (chrome.sidePanel?.setOptions && chrome.sidePanel?.open) {
+    try {
+      await chrome.sidePanel.setOptions({
+        tabId,
+        path,
+        enabled: true
+      });
+      await chrome.sidePanel.open({ windowId });
+      activeScrollSession = { windowId, tabId, panel: true };
+      return;
+    } catch (error) {
+      console.warn('Could not open side panel, falling back to popup window:', error);
+    }
+  }
+
+  const url = chrome.runtime.getURL(path);
   
   const win = await chrome.windows.create({
     url,
@@ -443,7 +459,7 @@ async function openScrollConsole(params) {
     height: 540
   });
   
-  activeScrollSession = { windowId: win.id, tabId };
+  activeScrollSession = { windowId: win.id, tabId, panel: false };
 }
 
 /**

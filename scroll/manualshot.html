@@ -3,45 +3,45 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Manual ScrollShot</title>
+    <title>滚动截图控制台</title>
     <link rel="stylesheet" href="manualshot.css" />
   </head>
   <body>
     <main class="manual">
       <header>
-        <p>MANUAL SHOT</p>
-        <h1>Manual Shot</h1>
+        <p>SCROLLSHOT</p>
+        <h1>滚动截图</h1>
       </header>
 
       <section class="readout">
         <div>
-          <span>Samples</span>
+          <span>采样</span>
           <strong id="shotCount">0</strong>
         </div>
         <div>
-          <span>Range</span>
+          <span>覆盖</span>
           <strong id="rangeText">0 px</strong>
         </div>
       </section>
 
       <label class="toggle-row">
         <input id="contentWidthRegion" type="checkbox" />
-        <span>Expand to scroll container width</span>
+        <span>扩展到滚动容器宽度</span>
       </label>
 
-      <button id="selectRegion" class="select-region" type="button">Select Region</button>
+      <button id="selectRegion" class="select-region" type="button">选择区域</button>
 
       <div class="controls">
-        <button id="start" class="start" type="button">Start</button>
-        <button id="finish" class="finish" type="button" disabled>Finish & Save</button>
+        <button id="start" class="start" type="button">开始</button>
+        <button id="finish" class="finish" type="button" disabled>完成并保存</button>
       </div>
 
       <div class="bar" aria-hidden="true">
         <div id="bar"></div>
       </div>
 
-      <p id="state" class="state">Click Start, then scroll the page manually.</p>
-      <p class="shortcut">Shortcut: Alt+Shift+S to start / finish</p>
+      <p id="state" class="state">选择区域后点击开始，滚动页面时会自动采样。</p>
+      <p class="shortcut">快捷键：Alt+Shift+S 开始 / 完成</p>
     </main>
     <script src="manualshot.js"></script>
   </body>

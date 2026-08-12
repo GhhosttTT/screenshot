@@ -69,7 +69,7 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not load captured image."));
+    image.onerror = () => reject(new Error("无法加载截图图像。"));
     image.src = src;
   });
 }
@@ -165,7 +165,7 @@ async function captureCurrentViewport(force = false) {
       return;
     }
     if (scroll.ok === false) {
-      throw new Error(scroll.error || "Selected region is not active.");
+      throw new Error(scroll.error || "选区状态不可用。");
     }
     metrics = { ...metrics, ...scroll };
 
@@ -181,7 +181,7 @@ async function captureCurrentViewport(force = false) {
     } else if (captureMode !== mode) {
       console.warn(`[ScrollShot] Mode changed from ${captureMode} to ${mode}`);
       if (requireRegion) {
-        throw new Error("Capture target changed. Select the region again and retry.");
+        throw new Error("捕获目标已变化，请重新选择区域。");
       }
       // 非强制选区模式：模式切换时给出警告，但不清空截图
       console.warn(`[ScrollShot] Continuing with mode ${captureMode}, ignoring ${mode}`);
@@ -194,7 +194,7 @@ async function captureCurrentViewport(force = false) {
       captureScrollKey = scrollKey;
     } else if (captureScrollKey !== scrollKey) {
       if (requireRegion) {
-        throw new Error("Capture target changed. Select the region again and retry.");
+        throw new Error("捕获目标已变化，请重新选择区域。");
       }
       return;
     }
@@ -296,13 +296,13 @@ function updateReadout() {
   }
   
   if (running) {
-    setState(`Capturing ${modeLabel}. Keep scrolling, then press Alt+Shift+S to finish.`);
+    setState(`正在采样${modeLabel === "page" ? "整页" : "选区"}。继续滚动，完成后按 Alt+Shift+S。`);
   }
 }
 
 async function stitchManualShots() {
   if (shots.length === 0) {
-    throw new Error("No screenshots were captured.");
+    throw new Error("还没有采集到截图。");
   }
 
   console.log(`[Stitch] Starting with ${shots.length} shots`);
@@ -439,7 +439,7 @@ async function stitchManualShots() {
       if (blob) {
         resolve(blob);
       } else {
-        reject(new Error("Could not create output image."));
+        reject(new Error("无法生成输出图片。"));
       }
     }, "image/png");
   });
@@ -454,7 +454,7 @@ async function startSession() {
   const selected = await sendToTarget({ type: "SCROLLSHOT_GET_SELECTED_REGION" });
   requireRegion = hasRegion;
   if (requireRegion && !selected?.ok) {
-    throw new Error("The selected region is gone. Click Select Region again.");
+    throw new Error("选区已失效，请重新选择区域。");
   }
   
   // 如果有选区，保存选区高度到metrics中
@@ -494,7 +494,7 @@ async function startSession() {
   console.log(`[StartSession] hasRegion=${hasRegion}, requireRegion=${requireRegion}`);
   console.log(`[StartSession] sampleIntervalMs=${sampleIntervalMs}`);
   contentWidthRegionInput.disabled = true;
-  setState(`Capturing ${hasRegion ? "selected region" : "page"}. Scroll manually, then press Alt+Shift+S to finish.`);
+  setState(`正在采样${hasRegion ? "选区" : "整页"}。滚动页面后按 Alt+Shift+S 完成。`);
   await focusTargetTab();
   
   console.log(`[StartSession] Taking first screenshot...`);
@@ -536,7 +536,7 @@ async function finishSession() {
   finishButton.disabled = true;
   
   console.log(`[FinishSession] Total shots collected: ${shots.length}`);
-  setState("Stitching and removing overlaps.");
+  setState("正在拼接并移除重叠内容。");
 
   try {
     const blob = await stitchManualShots();
@@ -550,7 +550,7 @@ async function finishSession() {
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" });
     hasRegion = false;
     requireRegion = false;
-    setState("Saved. Select a region or click Start to capture another image.");
+    setState("已保存。可以继续选择区域，或直接开始下一张。");
     setProgress(100);
     startButton.disabled = false;
     finishButton.disabled = true;
@@ -558,7 +558,7 @@ async function finishSession() {
     contentWidthRegionInput.disabled = false;
   } catch (error) {
     await sendToTarget({ type: "SCROLLSHOT_RESTORE" }).catch(() => {});
-    setState(error.message || "Manual screenshot failed.");
+    setState(error.message || "滚动截图失败。");
     startButton.disabled = false;
     selectRegionButton.disabled = false;
     contentWidthRegionInput.disabled = false;
@@ -569,7 +569,7 @@ async function finishSession() {
 
 startButton.addEventListener("click", () => {
   startSession().catch((error) => {
-    setState(error.message || "Could not start manual capture.");
+    setState(error.message || "无法开始滚动截图。");
     startButton.disabled = false;
     finishButton.disabled = true;
     contentWidthRegionInput.disabled = false;
@@ -579,7 +579,7 @@ startButton.addEventListener("click", () => {
 selectRegionButton.addEventListener("click", async () => {
   try {
     await ensureContentScript();
-    setState("Drag a rectangle on the page to select the area.");
+    setState("请在页面中拖拽框选区域。");
     selectRegionButton.disabled = true;
     await focusTargetTab();
     const response = await sendToTarget({ type: "SCROLLSHOT_SELECT_REGION" });
@@ -590,12 +590,12 @@ selectRegionButton.addEventListener("click", async () => {
     requireRegion = hasRegion;
     if (hasRegion) {
       console.log('[ManualShot] Region selected:', response.region);
-      setState(`Region selected${contentWidthRegionInput.checked ? " with content width" : ""}. Click Start, then scroll manually.`);
+      setState(`已选择区域${contentWidthRegionInput.checked ? "，宽度已扩展到滚动容器" : ""}。点击开始后滚动页面。`);
     } else {
       setState(response?.error || "Region selection cancelled.");
     }
   } catch (error) {
-    setState(error.message || "Could not select region.");
+    setState(error.message || "无法选择区域。");
   } finally {
     selectRegionButton.disabled = false;
   }
@@ -632,6 +632,6 @@ window.addEventListener("beforeunload", () => {
 
 if (autostart) {
   startSession().catch((error) => {
-    setState(error.message || "Could not start manual capture.");
+    setState(error.message || "无法开始滚动截图。");
   });
 }

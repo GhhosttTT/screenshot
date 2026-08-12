@@ -1,12 +1,12 @@
 :root {
-  --ink: #18211f;
-  --muted: #65726d;
-  --paper: #f7f4ea;
-  --panel: #fffdf6;
-  --line: #d6dfd8;
+  --bg: #f4f7f6;
+  --panel: #ffffff;
+  --ink: #1f2523;
+  --muted: #68736f;
+  --line: #dbe4e0;
   --accent: #0f766e;
-  --accent-dark: #124642;
-  --amber: #d99626;
+  --accent-strong: #0b4f4a;
+  --amber: #b7791f;
 }
 
 * {
@@ -17,11 +17,8 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  background:
-    linear-gradient(145deg, rgba(15, 118, 110, 0.16), transparent 50%),
-    repeating-linear-gradient(90deg, rgba(24, 33, 31, 0.035) 0 1px, transparent 1px 8px),
-    var(--paper);
-  font-family: "Aptos", "Segoe UI", sans-serif;
+  background: var(--bg);
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
 }
 
 button,
@@ -30,45 +27,50 @@ input {
 }
 
 .manual {
-  width: min(100vw, 410px);
+  width: min(100vw, 420px);
   min-height: 100vh;
-  padding: 18px;
+  padding: 14px;
+  background: var(--panel);
 }
 
 header {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 header p {
-  margin: 0 0 5px;
-  color: var(--accent-dark);
+  margin: 0;
+  color: var(--accent);
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.08em;
 }
 
 h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 32px;
-  line-height: 1;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
 .readout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .readout > div {
-  min-height: 82px;
-  padding: 13px;
+  min-height: 66px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 253, 246, 0.9);
-  box-shadow: 0 16px 34px rgba(18, 70, 66, 0.11);
+  border-radius: 7px;
+  background: #fbfcfc;
 }
 
 .readout span {
@@ -79,59 +81,64 @@ h1 {
 
 .readout strong {
   display: block;
-  margin-top: 8px;
+  margin-top: 5px;
+  color: var(--accent-strong);
   font-size: 24px;
+  font-weight: 850;
   font-variant-numeric: tabular-nums;
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   min-height: 38px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
   color: var(--muted);
+  background: #fbfcfc;
   font-size: 13px;
 }
 
 .toggle-row input {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   accent-color: var(--accent);
 }
 
 .controls {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .controls button,
 .select-region {
-  min-height: 46px;
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: 7px;
   cursor: pointer;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 .select-region {
   width: 100%;
-  margin-bottom: 10px;
-  color: var(--accent-dark);
-  background: #e3efe8;
-  border-color: #c4d8d0;
+  margin-bottom: 8px;
+  color: var(--accent-strong);
+  background: #e8f3f0;
+  border-color: #b9d7d0;
 }
 
 .start {
-  color: #fbfff8;
-  background: var(--accent-dark);
+  color: #f9fffd;
+  background: var(--accent-strong);
 }
 
 .finish {
-  color: var(--accent-dark);
-  background: #e8d19a;
-  border-color: #d3b15f;
+  color: #fffaf0;
+  background: var(--amber);
 }
 
 .controls button:disabled,
@@ -142,10 +149,10 @@ h1 {
 
 .bar {
   height: 7px;
-  margin-top: 16px;
+  margin-top: 14px;
   overflow: hidden;
   border-radius: 99px;
-  background: #dce7df;
+  background: #dce7e3;
 }
 
 .bar > div {
@@ -158,12 +165,12 @@ h1 {
 
 .state,
 .shortcut {
-  margin: 14px 2px 0;
+  margin: 12px 2px 0;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .shortcut {
-  margin-top: 6px;
+  margin-top: 5px;
 }
